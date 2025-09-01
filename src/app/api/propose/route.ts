@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { OpenAI } from "openai";
+import { OutputSchema } from "@/app/lib/validators";
 
 const InputSchema = z.object({
     exclude_ingredients: z.array(z.string()).default([]),
