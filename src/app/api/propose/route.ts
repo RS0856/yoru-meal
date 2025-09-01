@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { OpenAI } from "openai";
 
 const InputSchema = z.object({
     exclude_ingredients: z.array(z.string()).default([]),
