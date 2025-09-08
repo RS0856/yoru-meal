@@ -112,9 +112,39 @@ export default function ProposePage() {
                         ))}
                     </ul>
                 </div>
+                <SaveButtons result={result}/>
             </article>
         )}
     </main>
   )
 }
 
+function SaveButtons({ result }: { result:any }) {
+    const [saving, setSaving] = useState(false);
+    const [msg, setMsg] = useState<string | null>(null);
+
+    const onSave = async () => {
+        setSaving(true);
+        setMsg(null);
+        try {
+            const res = await fetch("/api/save", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(result)
+            });
+        } catch (e: any) {
+            setMsg(e.message);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    return (
+        <div className="flex items-center gap-3">
+            <button disabled={saving} onClick={onSave} className="px-3 py-2 rounded bg-green-600 text-white disabled:opacity-50">
+                {saving ? "保存中..." : "このレシピを保存"}
+            </button>
+            {msg && <span className="text-sm">{msg}</span>}
+        </div>
+    );
+}
