@@ -2,7 +2,7 @@ import Link from "next/link";
 import { supabaseServer } from "./lib/supabaseServer";
 
 export default async function Home() {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
 
   return (
@@ -15,10 +15,10 @@ export default async function Home() {
               <Link className="underline" href="/propose">提案</Link>
               <Link className="underline" href="/recipes">保存一覧</Link>
               <Link className="underline" href="/shopping">買い物リスト</Link>
-              <a className="px-3 py-2 rounded" href="/auth/logout">ログアウト</a>
+              <a className="px-3 py-2 rounded" href="/api/auth/logout">ログアウト</a>
             </>
           ) : (
-            <a className="px-3 py-2 rounded bg-black text-white" href="/auth/login">GitHubでログイン</a>
+            <a className="px-3 py-2 rounded bg-black text-white" href="api/auth/login">GitHubでログイン</a>
           )}
         </nav>
       </header>
