@@ -11,7 +11,7 @@ export default async function RecipesPage () {
             <main className="max-w-3xl mx-auto p-6 space-y-4">
                 <h1 className="text-2xl font-bold">保存したレシピ</h1>
                 <p>閲覧にはログインが必要です。</p>
-                <a className="px-3 py-2 rounded bg-black text-white inline-block" href="/auth/login">GitHubでログイン</a>
+                <a className="px-3 py-2 rounded bg-black text-white inline-block" href="/api/auth/login">GitHubでログイン</a>
             </main>
         );
     }
@@ -31,7 +31,7 @@ export default async function RecipesPage () {
                 <h1 className="text-2xl font-bold">保存したレシピ</h1>
                 <nav className="flex gap-3">
                     <Link className="underline" href="/propose">提案へ</Link>
-                    <a className="underline" href="/auth/logout">ログアウトへ</a>
+                    <a className="underline" href="/api/auth/logout">ログアウトへ</a>
                 </nav>
             </header>
 
