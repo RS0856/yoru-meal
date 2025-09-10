@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
     try {
-        const supabase = supabaseServer();
+        const supabase = await supabaseServer();
         const { data: { user } } = await supabase.auth.getUser();
         if(!user) return NextResponse.json({ error: "未ログイン" }, { status: 401 });
 

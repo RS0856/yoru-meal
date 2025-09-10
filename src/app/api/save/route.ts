@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 // TODO：本番はServer-sideの認証（Server Components or RLS + supabase-auth-helpers）
 export async function POST(req: NextRequest) {
     try {
-        const supabase = supabaseServer();
+        const supabase = await supabaseServer();
         const { data: { user }} = await supabase.auth.getUser();
         if (!user) return NextResponse.json({ error: "未ログイン" }, { status: 401 });
 

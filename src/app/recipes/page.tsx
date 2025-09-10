@@ -3,7 +3,7 @@ import { supabaseServer } from "../lib/supabaseServer";
 
 
 export default async function RecipesPage () {
-    const supabase = supabaseServer();
+    const supabase = await supabaseServer();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
