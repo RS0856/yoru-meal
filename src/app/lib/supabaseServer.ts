@@ -10,13 +10,17 @@ export const supabaseServer = async () => {
     {
       cookies: {
         getAll() {
-            return cookieStore.getAll()
-          },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              cookieStore.set(name, value, options)
-      })
-    },
+          return cookieStore.getAll()
+        },
+        setAll() {
+          // no-op in Server Components to avoid cookie writes
+        },
       },
-  })
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+      },
+    }
+  )
 }
