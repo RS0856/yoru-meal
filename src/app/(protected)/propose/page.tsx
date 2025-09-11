@@ -156,8 +156,13 @@ function SaveButtons({ result }: { result:any }) {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(result)
             });
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data?.error ?? "保存に失敗しました");
+            }
+            setMsg("レシピを保存しました！");
         } catch (e: any) {
-            setMsg(e.message);
+            setMsg(`エラー: ${e.message}`);
         } finally {
             setSaving(false);
         }

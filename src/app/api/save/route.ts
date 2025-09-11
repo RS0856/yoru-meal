@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
             steps: parsed.steps,
             cook_time_min: parsed.cook_time_min,
             tools: parsed.tools,
-            constrains: { no_vinegar: true }
+            constraints: { no_vinegar: true }
         })
         .select()
         .single();
