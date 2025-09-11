@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
             "あなたは一人暮らし社会人向けの夕食レシピ支援アシスタントです。",
             "厳密なJSONのみを出力してください。コードブロックは不要です。",
             "酢は使用禁止（no_vinegar=trueの場合）。",
-            "除外食材は ingredients と shopping_list に含めないでください。",
+            "除外食材は ingredients と shopping_lists に含めないでください。",
             "調理時間は原則30分以内（最大45分）。日本で入手しやすい食材を優先。",
             "分量は servings（人数）に合わせてください。"
           ].join("\n");
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
                 ingredients: [{ name: "string", qty: "number", unit: "string", optional: "boolean?" }],
                 steps: ["string"],
                 tools: ["string"],
-                shopping_list: [{ name: "string", qty: "number", unit: "string" }],
+                shopping_lists: [{ name: "string", qty: "number", unit: "string" }],
                 notes: ["string"]
             }
           });

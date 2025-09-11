@@ -21,10 +21,33 @@ export default function ProposePage() {
         // 改行、カンマ、全角カンマ、空白文字のいずれかで文字列を分割
         txt.split(/[\n,、\s]+/).map(s => s.trim()).filter(Boolean); 
 
-    
-
-
-
+    const onPropose = async () => {
+        setLoading(true);
+        setErr(null);
+        setResult(null);
+        try {
+            const res = await fetch("/api/propose",{
+                method:"POST",
+                headers: { "Content-Type": "application/json"},
+                body: JSON.stringify({
+                    exclude_ingredients: parseExclude(excludeText),
+                    available_tools:tools,
+                    servings,
+                    constraints: { no_vinegar: true },
+                    goals: [goal],
+                    budget_level: budget,
+                    locale: "JP"
+                })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data?.error ?? "提案に失敗しました");
+            setResult(data);
+        } catch (e: any) {
+            setErr(e.message);
+        } finally {
+            setLoading(false);
+        }
+    };
 
   return (
     <main className="max-w-3xl mx-auto p-6 space-y-6">
@@ -79,7 +102,8 @@ export default function ProposePage() {
             </div>
         </section>
 
-        <button disabled={loading} className="px-4 py-2 rounded bg-blue-600 text-white disabled:opacity-50">{loading ? "提案中..." : "レシピを提案"}
+        <button disabled={loading} onClick={onPropose} className="px-4 py-2 rounded bg-blue-600 text-white disabled:opacity-50">
+            {loading ? "提案中..." : "レシピを提案"}
         </button>
 
         {err && <p className="text-red-600">{err}</p>}
@@ -107,7 +131,7 @@ export default function ProposePage() {
                 <div>
                     <h3 className="font-medium">買い物リスト</h3>
                     <ul className="list-disc pl-5">
-                        {result.shopping_list.map((it: any, i:number) => (
+                        {result.shopping_lists.map((it: any, i:number) => (
                             <li key={i}>{it.name} {it.qty}{it.unit}</li>
                         ))}
                     </ul>
@@ -138,7 +162,7 @@ function SaveButtons({ result }: { result:any }) {
             setSaving(false);
         }
     };
-
+//TODO:保存が完了した場合は通知する
     return (
         <div className="flex items-center gap-3">
             <button disabled={saving} onClick={onSave} className="px-3 py-2 rounded bg-green-600 text-white disabled:opacity-50">
