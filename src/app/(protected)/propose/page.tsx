@@ -1,4 +1,5 @@
 "use client"
+import { useToast } from "@/components/Toast";
 import React, { useState } from 'react'
 
 const TOOL_PRESET = ["電子レンジ","フライパン","鍋","トースター","まな板","包丁"] as const;
@@ -146,6 +147,7 @@ export default function ProposePage() {
 function SaveButtons({ result }: { result:any }) {
     const [saving, setSaving] = useState(false);
     const [msg, setMsg] = useState<string | null>(null);
+    const { push } = useToast();
 
     const onSave = async () => {
         setSaving(true);
@@ -160,8 +162,10 @@ function SaveButtons({ result }: { result:any }) {
             if (!res.ok) {
                 throw new Error(data?.error ?? "保存に失敗しました");
             }
+            push({ text: "保存しました", type: "success"});
             setMsg("レシピを保存しました！");
         } catch (e: any) {
+            push({ text: e.message, type: "error" });
             setMsg(`エラー: ${e.message}`);
         } finally {
             setSaving(false);
