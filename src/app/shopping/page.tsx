@@ -11,6 +11,8 @@ export default function ShoppingPage() {
     const [err, setErr] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
+    const KEY = (id:string) => `ym-shopping-${id}`;
+
     useEffect(() => {
         (async () => {
             try {
@@ -25,6 +27,17 @@ export default function ShoppingPage() {
             }
         })();
     },[]);
+
+    useEffect(() => {
+        if(data?.recipe_id) {
+            const raw = localStorage.getItem(KEY(data.recipe_id));
+            if(raw) setChecked(JSON.parse(raw));
+        }
+    },[data?.recipe_id]);
+
+    useEffect(() => {
+        if(data?.recipe_id) localStorage.setItem(KEY(data.recipe_id),JSON.stringify(checked));
+    },[checked, data?.recipe_id]);
 
     const toggle = (i: number) => setChecked(prev => ({...prev, [i]: !prev[i]}));
 
