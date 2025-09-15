@@ -4,13 +4,39 @@ import React, { useState } from 'react'
 
 const TOOL_PRESET = ["電子レンジ","フライパン","鍋","トースター","まな板","包丁"] as const;
 
+// 型定義
+type BudgetLevel = "low" | "medium" | "high";
+type GoalType = "平日夕食" | "洗い物少なめ" | "高たんぱく";
+
+type Ingredient = { name: string; qty: number; unit: string; optional?: boolean };
+type ShoppingItem = { name: string; qty: number; unit: string };
+export type RecipeProposal = {
+    title: string;
+    cook_time_min: number;
+    ingredients: Ingredient[];
+    steps: string[];
+    tools: string[];
+    shopping_lists: ShoppingItem[];
+    notes: string[];
+};
+
+// APIエラーメッセージ抽出ヘルパー
+function extractApiErrorMessage(data: unknown): string | null {
+    if (data && typeof data === "object" && "error" in data) {
+        const v = (data as { error?: unknown }).error;
+        if (typeof v === "string") return v;
+        try { return JSON.stringify(v); } catch { return ""; }
+    }
+    return null;
+}
+
 export default function ProposePage() {
     const [excludeText, setExcludeText] = useState("");
     const [tools, setTools] = useState<string[]>(["電子レンジ","フライパン","まな板","包丁"]);
     const [servings, setServings] = useState(1);
-    const [goal, setGoal] = useState<"平日夕食"|"洗い物少なめ"|"高たんぱく">("平日夕食");
-    const [budget, setBudget] = useState<"low"|"medium"|"high">("low");
-    const [result, setResult] = useState<any>(null);
+    const [goal, setGoal] = useState<GoalType>("平日夕食");
+    const [budget, setBudget] = useState<BudgetLevel>("low");
+    const [result, setResult] = useState<RecipeProposal | null>(null);
     const [loading, setLoading] = useState(false);
     const [err, setErr] = useState<string | null>(null);
 
@@ -18,7 +44,7 @@ export default function ProposePage() {
         setTools(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev,t]);
 
 
-    const parseExclude = (txt: string) => 
+    const parseExclude = (txt: string): string[] => 
         // 改行、カンマ、全角カンマ、空白文字のいずれかで文字列を分割
         txt.split(/[\n,、\s]+/).map(s => s.trim()).filter(Boolean); 
 
@@ -40,11 +66,30 @@ export default function ProposePage() {
                     locale: "JP"
                 })
             });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data?.error ?? "提案に失敗しました");
-            setResult(data);
-        } catch (e: any) {
-            setErr(e.message);
+
+            // Content-Type を見て JSON/HTML を判定し、HTML の場合はテキストとして扱う
+            const contentType = res.headers.get("content-type") || "";
+            let data: unknown;
+            if (contentType.includes("application/json")) {
+                data = await res.json();
+            } else {
+                const text = await res.text();
+                try {
+                    data = JSON.parse(text);
+                } catch {
+                    // HTML 等が返ってきた場合はそのままメッセージ化
+                    throw new Error(text.slice(0, 200) || "サーバーエラー");
+                }
+            }
+
+            if (!res.ok) {
+                const msg = extractApiErrorMessage(data) ?? "提案に失敗しました";
+                throw new Error(msg);
+            }
+            setResult(data as RecipeProposal);
+        } catch (e: unknown) {
+            const message = e instanceof Error ? e.message : "不明なエラーが発生しました";
+            setErr(message);
         } finally {
             setLoading(false);
         }
@@ -84,7 +129,7 @@ export default function ProposePage() {
             </div>
             <div>
                 <label className="font-medium">予算</label>
-                <select className="block border rounded p-2 mt-1" value={budget} onChange={e => setBudget(e.target.value as any)}>
+                <select className="block border rounded p-2 mt-1" value={budget} onChange={e => setBudget(e.target.value as BudgetLevel)}>
                     <option value="low">low</option>
                     <option value="medium">medium</option>
                     <option value="high">high</option>
@@ -97,7 +142,7 @@ export default function ProposePage() {
             <div className="flex gap-3 mt-2">
                 {["平日夕食","洗い物少なめ","高たんぱく"].map(g => (
             <button key={g}
-              onClick={() => setGoal(g as any)}
+              onClick={() => setGoal(g as GoalType)}
               className={`px-3 py-2 rounded border ${goal===g ? "bg-black text-white" : ""}`}>{g}</button>
           ))}
             </div>
@@ -118,7 +163,7 @@ export default function ProposePage() {
                 <div>
                     <h3 className="font-medium">材料</h3>
                     <ul className="list-disc pl-5">
-                        {result.ingredients.map((it: any, i: number) => (
+                        {result.ingredients.map((it: Ingredient, i: number) => (
                             <li key={i}>{it.name} {it.qty}{it.optional ? "（任意）" : ""}</li>
                         ))}
                     </ul>
@@ -132,7 +177,7 @@ export default function ProposePage() {
                 <div>
                     <h3 className="font-medium">買い物リスト</h3>
                     <ul className="list-disc pl-5">
-                        {result.shopping_lists.map((it: any, i:number) => (
+                        {result.shopping_lists.map((it: ShoppingItem, i:number) => (
                             <li key={i}>{it.name} {it.qty}{it.unit}</li>
                         ))}
                     </ul>
@@ -144,7 +189,7 @@ export default function ProposePage() {
   )
 }
 
-function SaveButtons({ result }: { result:any }) {
+function SaveButtons({ result }: { result: RecipeProposal }) {
     const [saving, setSaving] = useState(false);
     const [msg, setMsg] = useState<string | null>(null);
     const { push } = useToast();
@@ -158,20 +203,29 @@ function SaveButtons({ result }: { result:any }) {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(result)
             });
-            const data = await res.json();
+            const contentType = res.headers.get("content-type") || "";
+            let data: unknown;
+            if (contentType.includes("application/json")) {
+                data = await res.json();
+            } else {
+                const text = await res.text();
+                try { data = JSON.parse(text); } catch { throw new Error(text.slice(0,200) || "サーバーエラー"); }
+            }
             if (!res.ok) {
-                throw new Error(data?.error ?? "保存に失敗しました");
+                const msg = extractApiErrorMessage(data) ?? "保存に失敗しました";
+                throw new Error(msg);
             }
             push({ text: "保存しました", type: "success"});
             setMsg("レシピを保存しました！");
-        } catch (e: any) {
-            push({ text: e.message, type: "error" });
-            setMsg(`エラー: ${e.message}`);
+        } catch (e: unknown) {
+            const message = e instanceof Error ? e.message : "不明なエラーが発生しました";
+            push({ text: message, type: "error" });
+            setMsg(`エラー: ${message}`);
         } finally {
             setSaving(false);
         }
     };
-//TODO:保存が完了した場合は通知する
+
     return (
         <div className="flex items-center gap-3">
             <button disabled={saving} onClick={onSave} className="px-3 py-2 rounded bg-green-600 text-white disabled:opacity-50">
