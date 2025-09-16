@@ -7,13 +7,6 @@ type Ingredient = { name: string; qty?: string | number; unit?: string; optional
 export default async function RecipeDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
     const supabase = await supabaseServer();
-    const { data: { user }} = await supabase.auth.getUser();
-    if (!user) return (
-        <main className="max-w-3xl mx-auto p-6">
-            <p>閲覧にはログインが必要です。</p>
-            <a className="px-3 py-2 rouded bg-black text-white inline-block mt-3" href="/api/auth/login">GitHubでログイン</a>
-        </main>
-    );
 
     const { data: recipe, error } = await supabase
         .from("recipes")

@@ -53,9 +53,9 @@ export default function Header({ initialUser }: Props) {
                     レシピを提案
                     </Link>
                     {user ? (
-                        <a href="/auth/logout" className="px-3 py-2 rounded border">ログアウト</a>
+                        <a href="/api/auth/logout" className="px-3 py-2 rounded border">ログアウト</a>
                     ) : (
-                        <a href="/auth/login" className="px-3 py-2 rounded border">GitHubでログイン</a>
+                        <a href="/api/auth/login" className="px-3 py-2 rounded border">GitHubでログイン</a>
                     )}
                 </div>
 

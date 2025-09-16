@@ -1,32 +1,17 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState } from "react";
 
 type Item = { name: string, qty: number, unit: string };
-type ShoppingData = { recipe_id: string, items: Item[], recipe_title?: string };
+export type ShoppingData = { recipe_id: string, items: Item[], recipe_title?: string };
 
-export default function ShoppingPage() {
-    const [data, setData] = useState<ShoppingData | null>(null);
+type Props = { initialData: ShoppingData | null };
+
+export default function ShoppingClient({ initialData }: Props) {
+    const [data, setData] = useState<ShoppingData | null>(initialData);
     const [checked, setChecked] = useState<Record<number,boolean>>({});
-    const [err, setErr] = useState<string | null>(null);
-    const [loading, setLoading] = useState(true);
 
     const KEY = (id:string) => `ym-shopping-${id}`;
-
-    useEffect(() => {
-        (async () => {
-            try {
-                const res = await fetch("api/shopping/latest");
-                const json = await res.json();
-                if (!res.ok) throw new Error(json?.error ?? "読み込みに失敗しました");
-                setData(json);
-            } catch (e: any) {
-                setErr(e.message);
-            } finally {
-                setLoading(false);
-            }
-        })();
-    },[]);
 
     useEffect(() => {
         if(data?.recipe_id) {
@@ -41,8 +26,6 @@ export default function ShoppingPage() {
 
     const toggle = (i: number) => setChecked(prev => ({...prev, [i]: !prev[i]}));
 
-    if (loading) return <main className="max-w-3xl mx-auto p-6">読み込み中...</main>
-    if (err) return <main className="max-w-3xl mx-auto p-6 text-red-600">{err}</main>;
     if (!data) return <main className="max-w-3xl mx-auto p-6">データがありません。</main>
 
     return (
@@ -61,4 +44,4 @@ export default function ShoppingPage() {
             </ul>
         </main>
     );
-}
+} 

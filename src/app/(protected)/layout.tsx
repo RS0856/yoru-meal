@@ -4,6 +4,6 @@ import { supabaseServer } from "../lib/supabaseServer";
 export default async function ProtectedLayout({ children}: { children: React.ReactNode}){
     const supabase = await supabaseServer();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) redirect("/auth/login");
+    if (!user) redirect("/api/auth/login");
     return <>{children}</>
 }

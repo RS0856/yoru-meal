@@ -18,7 +18,7 @@ export default async function Home() {
               <a className="px-3 py-2 rounded" href="/api/auth/logout">ログアウト</a>
             </>
           ) : (
-            <a className="px-3 py-2 rounded bg-black text-white" href="api/auth/login">GitHubでログイン</a>
+            <a className="px-3 py-2 rounded bg-black text-white" href="/api/auth/login">GitHubでログイン</a>
           )}
         </nav>
       </header>
