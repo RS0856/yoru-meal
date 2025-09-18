@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { supabaseServer } from "./lib/supabaseServer";
 
 export default async function Home() {
@@ -7,22 +6,6 @@ export default async function Home() {
 
   return (
     <main className="max-w-4xl mx-auto p-8 space-y-8">
-      <header className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">yoru-meal</h1>
-        <nav className="flex items-center gap-3">
-          {user ? (
-            <>
-              <Link className="underline" href="/propose">提案</Link>
-              <Link className="underline" href="/recipes">保存一覧</Link>
-              <Link className="underline" href="/shopping">買い物リスト</Link>
-              <a className="px-3 py-2 rounded" href="/api/auth/logout">ログアウト</a>
-            </>
-          ) : (
-            <a className="px-3 py-2 rounded bg-black text-white" href="/api/auth/login">GitHubでログイン</a>
-          )}
-        </nav>
-      </header>
-
       <section className="grid gap-6 md:grid-cols-3">
         <div className="border rounded-2xl p-5 shadow-sm">
           <h2 className="font-semibold mb-2">LLMで提案</h2>
