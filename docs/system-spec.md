@@ -1,7 +1,7 @@
 # 仕様書 - yoru-meal (MVP)
 
-バージョン: v0.1\
-最終更新: 2025-08-25 (JST)
+バージョン: v0.2\
+最終更新: 2025-09-18 (JST)
 
 ---
 
@@ -68,6 +68,7 @@
 - NFR-04: 運用性: ログに**LLM呼び出し回数/失敗率**を記録（簡易）。
 - NFR-05: コスト: 推論は `gpt-4o-mini` を既定、不要な再生成を避けるUI導線。
 - NFR-06: アクセシビリティ: フォーム要素にラベル、タップ領域44px相当、キーボード操作可能。
+- NFR-07: レート制限: 提案APIは1分間に5回まで、ユーザーIDまたはIPアドレス単位で制限。
 
 ---
 
@@ -117,6 +118,16 @@
   "budget_level": "low",
   "locale": "JP"
 }
+
+**入力パラメータ詳細**:
+- `exclude_ingredients`: 除外する食材の配列（デフォルト: 空配列）
+- `available_tools`: 利用可能な調理器具の配列（デフォルト: 空配列）
+- `servings`: 人数（デフォルト: 1）
+- `constraints.no_vinegar`: 酢の使用禁止フラグ（デフォルト: true）
+- `goals`: 料理の目標・希望の配列（デフォルト: ["平日夕食"]）
+- `budget_level`: 予算レベル "low"|"medium"|"high"（デフォルト: "low"）
+- `locale`: ロケール（デフォルト: "JP"）
+}
 ```
 
 **出力**（例）:
@@ -136,14 +147,14 @@
     "電子レンジ600Wで4〜5分加熱して全体を混ぜる"
   ],
   "tools": ["電子レンジ","まな板","包丁"],
-  "shopping_list": [
+  "shopping_lists": [
     {"name":"長ねぎ","qty":1,"unit":"本"}
   ],
   "notes": ["加熱後に余熱で火入れ"]
 }
 ```
 
-**エラー**: 400（入力不正）、422（Zod検証失敗）、500（LLM障害）
+**エラー**: 400（入力不正）、422（Zod検証失敗）、429（レート制限）、500（LLM障害）
 
 ### 8.2 POST `/api/save`（認証必須）
 
@@ -159,9 +170,9 @@
 
 ### 8.4 認証導線
 
-- `GET /auth/login` → GitHub OAuth開始
-- `GET /auth/callback` → SupabaseがCookie設定後、`/`へ
-- `GET /auth/logout` → セッション破棄
+- `GET /api/auth/login` → GitHub OAuth開始
+- `GET /api/auth/callback` → SupabaseがCookie設定後、`/`へ
+- `GET /api/auth/logout` → セッション破棄
 
 ---
 
@@ -189,6 +200,7 @@ flowchart TD
 
 - **recipes**: `id, user_id, title, ingredients(jsonb), steps(jsonb), cook_time_min, tools(jsonb), constraints(jsonb), created_at`
 - **shopping\_lists**: `id, user_id, recipe_id, items(jsonb), created_at`
+- **api_rate_limit**: `id, key, route, at`
 
 ### 9.3 RLSポリシー（要点）
 
@@ -222,6 +234,7 @@ flowchart TD
 - 保存失敗: 認証状態を再確認→再ログイン導線
 - 404: レシピ詳細の他ユーザーデータ非公開（RLS）
 - トースト: 成功/失敗の簡易通知
+- レート制限: 429エラー時に「しばらくしてから再試行してください」メッセージ表示
 
 ---
 
