@@ -1,5 +1,6 @@
 "use client"
 
+import { Plus, List, ShoppingCart, Home } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -9,9 +10,10 @@ type User = { id: string | null; email?: string | null };
 type Props = { initialUser: User | null };
 
 const LINKS = [
-    { href: "/propose", label: "提案", protected: false },
-    { href: "/recipes", label: "保存一覧", protected: true },
-    { href: "/shopping", label: "買い物リスト", protected: true },
+    { href: "/", label: "ホーム", icon: Home, protected: false },
+    { href: "/propose", label: "提案", icon: Plus, protected: false },
+    { href: "/recipes", label: "保存一覧", icon: List,protected: true },
+    { href: "/shopping", label: "買い物リスト", icon: ShoppingCart, protected: true },
   ];
 
 export default function Header({ initialUser }: Props) {
@@ -21,34 +23,44 @@ export default function Header({ initialUser }: Props) {
 
     useEffect(() => { setOpen(false);}, [pathname]);
 
-    const NavLink = ({ href, label, isProtected }: { href: string; label: string; isProtected?: boolean }) => {
-        const active = pathname === href;
-        return (
-            <Link href={href} className={`px-3 py-2 rounded hover:bg-white/10 ${active ? "bg-white/10" : ""}`}>
-                {label}{isProtected ? "🔒": ""}
-            </Link>
-        );
-    };
-
     return (
-        <header className="sticky top-0 z-40 bg-ym-surface/80 backdrop-blur border-b border-white/10">
-            <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
+        <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div className="container mx-auto px-4 h-16 flex lg:h-20 items-center justify-between max-w-7xl">
                 {/* Left: Logo */}
-                <div className="flex items-center gap-2">
-                    <Link href="/" className="flex items-center gap-2">
-                        <span className="font-semibold">YoruMeal</span>
-                    </Link>
-                </div>
+                <Link href="/" className="flex items-center space-x-2">
+                    <div className="h-8 w-8 lg:h-10 lg:w-10 rounded-lg bg-primary flex items-center justify-center">
+                        <span className="text-primary-foreground font-bold text-lg lg:text-xl">夜</span>
+                    </div>
+                    <span className="font-bold text-xl lg:text-2xl">YoruMeal</span>
+                </Link>
+
 
                 {/* Center: Desktop Nav */}
-                <nav className="hidden md:flex items-center gap-1">
-                    {LINKS.map(l => (
-                        <NavLink key={l.href} href={l.href} label={l.label} isProtected={l.protected} />
-                    ))}
-                </nav>
+                <div className="hidden md:flex items-center space-x-4 lg:space-x-6">
+                    <nav className="flex items-center space-x-2 lg:space-x-4">
+                        {LINKS.map((item) => {
+                            const Icon = item.icon;
+                            return (
+                                <Link 
+                                    key={item.label} 
+                                    href={item.href} 
+                                    className={`flex items-center space-x-2 px-4 py-2 lg:px-6 lg:py-3 rounded-lg text-sm lg:text-base font-medium transition-all duration-200 hover:scale-105 ${
+                                        pathname === item.href
+                                        ? "bg-primary text-primary-foreground shadow-md"
+                                        : "text-muted-foreground hover:text-foreground"
+                                    }`}>
+                                    <Icon className="h-4 w-4 lg:h-5 lg:w-5" />
+                                    <span>{item.label}</span>
+                                </Link>
+                            );
+                        })}
+                    </nav>
+                    {/* TODO: Githubログインボタンをコンポーネント化*/}
+                    {/* <GitHubAuth /> */}
+                </div>
 
                 {/* Right: Actions */}
-                <div className="hidden md:flex items-center gap-2">
+                {/* <div className="hidden md:flex items-center gap-2">
                     <Link href={"/propose"} className="px-3 py-2 rounded bg-ym-accent text-black font-medium">
                     レシピを提案
                     </Link>
@@ -57,7 +69,7 @@ export default function Header({ initialUser }: Props) {
                     ) : (
                         <a href="/api/auth/login" className="px-3 py-2 rounded border">GitHubでログイン</a>
                     )}
-                </div>
+                </div> */}
 
                 {/* Mobile menu button */}
                 <button className="md:hidden p-2 rounded border" aria-label="メニュー" aria-expanded={open} onClick={() => setOpen(!open)}>
