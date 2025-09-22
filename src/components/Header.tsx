@@ -1,10 +1,11 @@
 "use client"
 
-import { Plus, List, ShoppingCart, Home } from "lucide-react";
+import { Plus, List, ShoppingCart, Home, Menu, GithubIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-
+import { useState } from "react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
 
 type User = { id: string | null; email?: string | null };
 type Props = { initialUser: User | null };
@@ -17,11 +18,8 @@ const LINKS = [
   ];
 
 export default function Header({ initialUser }: Props) {
-    const [open, setOpen] = useState(false);
     const [user, setUser] = useState<User | null>(initialUser ?? null);
     const pathname = usePathname();
-
-    useEffect(() => { setOpen(false);}, [pathname]);
 
     return (
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -35,7 +33,7 @@ export default function Header({ initialUser }: Props) {
                 </Link>
 
 
-                {/* Center: Desktop Nav */}
+                {/* Desktop Nav */}
                 <div className="hidden md:flex items-center space-x-4 lg:space-x-6">
                     <nav className="flex items-center space-x-2 lg:space-x-4">
                         {LINKS.map((item) => {
@@ -55,40 +53,58 @@ export default function Header({ initialUser }: Props) {
                             );
                         })}
                     </nav>
-                    {/* TODO: Githubログインボタンをコンポーネント化*/}
-                    {/* <GitHubAuth /> */}
+
+                    <Button>
+                        <GithubIcon className="h-4 w-4" />
+                        {user ? (
+                        <a href="/api/auth/logout" className="">ログアウト</a>
+                        ) : (
+                        <a href="/api/auth/login" className="">GitHubでログイン</a>
+                        )}
+                    </Button>
                 </div>
 
-                {/* Right: Actions */}
-                {/* <div className="hidden md:flex items-center gap-2">
-                    <Link href={"/propose"} className="px-3 py-2 rounded bg-ym-accent text-black font-medium">
-                    レシピを提案
-                    </Link>
-                    {user ? (
-                        <a href="/api/auth/logout" className="px-3 py-2 rounded border">ログアウト</a>
-                    ) : (
-                        <a href="/api/auth/login" className="px-3 py-2 rounded border">GitHubでログイン</a>
-                    )}
-                </div> */}
-
-                {/* Mobile menu button */}
-                <button className="md:hidden p-2 rounded border" aria-label="メニュー" aria-expanded={open} onClick={() => setOpen(!open)}>
-                ☰
-                </button>
+                {/* Mobile Nav */}
+                <div className="flex items-center space-x-2 md:hidden">
+                    <Button>
+                        <GithubIcon className="h-4 w-4" />
+                        {user ? (
+                        <a href="/api/auth/logout" className="">ログアウト</a>
+                        ) : (
+                        <a href="/api/auth/login" className="">GitHubでログイン</a>
+                        )}
+                    </Button>
+                    <Sheet>
+                        <SheetTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                                <Menu className="h-5 w-5" />
+                                <span className="sr-only">メニューを開く</span>
+                            </Button>
+                        </SheetTrigger>
+                        <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+                            <nav className="flex flex-col space-y-4 mt-8">
+                                {LINKS.map((item) => {
+                                    const Icon = item.icon;
+                                    return (
+                                        <Link 
+                                            key={item.label} 
+                                            href={item.href} 
+                                            className={`flex items-center space-x-3 px-4 py-3 rounded-lg text-base font-medium transition-colors ${
+                                                pathname === item.href
+                                                ? "bg-primary text-primary-foreground"
+                                                : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                                            }`}
+                                        >
+                                            <Icon className="h-5 w-5" />
+                                            <span>{item.label}</span>
+                                        </Link>
+                                    );
+                                })}
+                            </nav>
+                        </SheetContent>
+                    </Sheet>
+                </div>
             </div>
-
-            {/* Mobile Drawer */}
-            {open && (
-                <div className="md:hidden border-t border-white/10 bg-ym-surface">
-                    <nav className="max-w-6xl mx-auto px-4 py-3 flex flex-col gap-1">
-                        {LINKS.map(l => (
-                            <Link key={l.href} href={l.href} className="px-3 py-2 rounded hover:bg-white/10">
-                            {l.label}{l.protected ? "🔒" : ""}
-                            </Link>
-                        ))}
-                    </nav>
-                </div>
-            )}
         </header>
     );
 }
