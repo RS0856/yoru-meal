@@ -3,7 +3,9 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/Toast";
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import { supabaseServer } from "./lib/supabaseServer";
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,6 +42,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <ToastProvider>
           <Header initialUser={user ? { id: user.id, email: user.email } : null }/>
           <main id="main" className="min-h-[calc(100vh-56px)]">{children}</main>
+          <Footer />
         </ToastProvider>
       </body>
     </html>

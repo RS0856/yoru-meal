@@ -35,10 +35,6 @@ export default async function Home() {
           <li>気に入ったら「このレシピを保存」→「保存一覧」「買い物リスト」へ</li>
         </ol>
       </section>
-
-      <footer className="pt-6 border-t text-sm opacity-70">
-          (c) {new Date().getFullYear()} yoru-meal
-      </footer>
     </main>
   );
 }
