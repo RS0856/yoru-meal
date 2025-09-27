@@ -1,13 +1,20 @@
 "use client"
 import { useToast } from "@/components/Toast";
 import React, { useState } from 'react'
-
-const TOOL_PRESET = ["電子レンジ","フライパン","鍋","トースター","まな板","包丁"] as const;
+import { MainLayout }from "@/components/Main-layout";
+import { User } from "@supabase/supabase-js";
+import { Card, CardHeader, CardTitle, CardContent,CardDescription } from "@/components/ui/card";
+import { ChefHat, Loader2 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+const TOOL_PRESET = ["電子レンジ","フライパン","鍋","トースター"] as const;
 
 // 型定義
 type BudgetLevel = "low" | "medium" | "high";
-type GoalType = "平日夕食" | "洗い物少なめ" | "高たんぱく";
-
+type GoalType = "時短" | "ボリューム重視" | "バランス重視" | "ヘルシー";
 type Ingredient = { name: string; qty: number; unit: string; optional?: boolean };
 type ShoppingItem = { name: string; qty: number; unit: string };
 export type RecipeProposal = {
@@ -30,11 +37,11 @@ function extractApiErrorMessage(data: unknown): string | null {
     return null;
 }
 
-export default function ProposePage() {
+export default function ProposePage({ initialUser }: { initialUser: User | null }) {
     const [excludeText, setExcludeText] = useState("");
-    const [tools, setTools] = useState<string[]>(["電子レンジ","フライパン","まな板","包丁"]);
+    const [tools, setTools] = useState<string[]>(["電子レンジ"]);
     const [servings, setServings] = useState(1);
-    const [goal, setGoal] = useState<GoalType>("平日夕食");
+    const [goal, setGoal] = useState<GoalType>("時短");
     const [budget, setBudget] = useState<BudgetLevel>("low");
     const [result, setResult] = useState<RecipeProposal | null>(null);
     const [loading, setLoading] = useState(false);
@@ -42,7 +49,6 @@ export default function ProposePage() {
 
     const onToggleTool = (t: string) => 
         setTools(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev,t]);
-
 
     const parseExclude = (txt: string): string[] => 
         // 改行、カンマ、全角カンマ、空白文字のいずれかで文字列を分割
@@ -96,96 +102,218 @@ export default function ProposePage() {
     };
 
   return (
-    <main className="max-w-3xl mx-auto p-6 space-y-6">
-        <h1 className="text-2xl font-bold">夕食レシピ提案</h1>
-
-        <section className="space-y-2">
-            <label className="font-medium">使いたくない食材（改行/読点区切り）</label>
-            <textarea 
-                className="w-full border rounded p-2"
-                rows={3}
-                value={excludeText}
-                onChange={e => setExcludeText(e.target.value)}
-                placeholder="例：酢、ピーマン、セロリ"
-            />
-        </section>
-
-        <section className="space-y-2">
-            <div className="font-medium">使える調理器具</div>
-            <div className="flex flex-wrap gap-3">
-                {TOOL_PRESET.map(t => (
-                    <label key={t} className="flex items-center gap-2 border rounded px-3 py-2">
-                        <input type="checkbox" checked={tools.includes(t)} onChange={() => onToggleTool(t)} />
-                        {t}
-                    </label>
-                ))}
+    <MainLayout initialUser={initialUser}>
+        <div className="space-y-8 lg:space-y-12">
+            <div className="text-center space-y-4">
+                <h1 className="text-3xl lg:text-4xl font-bold">レシピ提案</h1>
+                <p className="text-muted-foreground text-lg max-w-3xl mx-auto">
+                    条件を入力して、あなたにぴったりのレシピを提案してもらいましょう
+                </p>
             </div>
-        </section>
+            <div className="grid lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-xl lg:text-2xl">
+                                <ChefHat className="h-5 w-5 lg:h-6 lg:w-6"/>
+                                条件を入力してください
+                            </CardTitle>
+                            <CardDescription className="text-base">
+                                除外したい食材や使用可能な調理器具を選択してください
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-8">
+                                {/* 除外食材 */}
+                                <div className="space-y-3">
+                                    <Label htmlFor="excludeText" className="text-base font-medium">除外食材</Label>
+                                    <Textarea
+                                        id="excludeText"
+                                        placeholder="例：酢、ナッツ、乳製品"
+                                        value={excludeText}
+                                        onChange={e => setExcludeText(e.target.value)}
+                                        className="min-h-[120px] text-base"
+                                    />
+                                </div>
 
-        <section className="grid grid-cols-2 gap-4">
-            <div>
-                <label className="font-medium">人数</label>
-                <input type="number" min={1} className="block border rounded p-2 mt-1 w-28" value={servings} onChange={e => setServings(parseInt(e.target.value || "1",10))}/>
-            </div>
-            <div>
-                <label className="font-medium">予算</label>
-                <select className="block border rounded p-2 mt-1" value={budget} onChange={e => setBudget(e.target.value as BudgetLevel)}>
-                    <option value="low">low</option>
-                    <option value="medium">medium</option>
-                    <option value="high">high</option>
-                </select>
-            </div>
-        </section>
+                                {/* 調理器具 */}
+                                <div className="space-y-4">
+                                    <Label className="text-base font-medium">使用可能な調理器具</Label>
+                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                        {TOOL_PRESET.map(tool => (
+                                            <div key={tool} className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+                                                <Checkbox id={tool} checked={tools.includes(tool)} onCheckedChange={() => onToggleTool(tool)} className="h-5 w-5"/>
+                                                <Label htmlFor={tool} className="text-sm font-normal cursor-pointer flex-1">
+                                                    {tool}
+                                                </Label>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
 
-        <section>
-            <label className="font-medium">目標</label> 
-            <div className="flex gap-3 mt-2">
-                {["平日夕食","洗い物少なめ","高たんぱく"].map(g => (
-            <button key={g}
-              onClick={() => setGoal(g as GoalType)}
-              className={`px-3 py-2 rounded border ${goal===g ? "bg-black text-white" : ""}`}>{g}</button>
-          ))}
-            </div>
-        </section>
+                                {/* その他の条件 */}
+                                <div className="grid md:grid-cols-3 gap-6">
+                                    <div className="space-y-3">
+                                        <Label htmlFor="servings" className="text-base font-medium">人数</Label>
+                                        <Select value={servings.toString()} onValueChange={e => setServings(parseInt(e,10))}>
+                                            <SelectTrigger className="h-12">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="1">1人分</SelectItem>
+                                                <SelectItem value="2">2人分</SelectItem>
+                                                <SelectItem value="3">3人分</SelectItem>
+                                                <SelectItem value="4">4人分</SelectItem>
+                                                <SelectItem value="5">5人分以上</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
 
-        <button disabled={loading} onClick={onPropose} className="px-4 py-2 rounded bg-blue-600 text-white disabled:opacity-50">
-            {loading ? "提案中..." : "レシピを提案"}
-        </button>
+                                    <div className="space-y-3">
+                                        <Label htmlFor="budget" className="text-base font-medium">予算</Label>
+                                        <Select value={budget} onValueChange={e => setBudget(e as BudgetLevel)}>
+                                            <SelectTrigger className="h-12">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="low">低め</SelectItem>
+                                                <SelectItem value="medium">普通</SelectItem>
+                                                <SelectItem value="high">高め</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
 
-        {err && <p className="text-red-600">{err}</p>}
+                                    <div className="space-y-3">
+                                        <Label htmlFor="goal" className="text-base font-medium">目標</Label>
+                                        <Select value={goal} onValueChange={e => setGoal(e as GoalType)}>
+                                            <SelectTrigger className="h-12">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="時短">時短</SelectItem>
+                                                <SelectItem value="ボリューム重視">ボリューム重視</SelectItem>
+                                                <SelectItem value="バランス重視">バランス重視</SelectItem>
+                                                <SelectItem value="ヘルシー">ヘルシー</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
 
-        {result && (
-            <article className="border rounded p-4 space-y-3">
-                <header className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold">{result.title}</h2>
-                    <span className="text-sm opacity-70">{result.cook_time_min}分</span>
-                </header>
-                <div>
-                    <h3 className="font-medium">材料</h3>
-                    <ul className="list-disc pl-5">
-                        {result.ingredients.map((it: Ingredient, i: number) => (
-                            <li key={i}>{it.name} {it.qty}{it.optional ? "（任意）" : ""}</li>
-                        ))}
-                    </ul>
+                                <Button disabled={loading} onClick={onPropose} className="w-full h-14 text-base lg:text-lg">
+                                        {loading ? (
+                                            <>
+                                                <Loader2 className="h-5 w-5 animate-spin" />
+                                                提案中...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <ChefHat className="h-5 w-5" />
+                                                レシピを提案してもらう
+                                            </>
+                                        )}
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
                 </div>
+
                 <div>
-                    <h3 className="font-medium">手順</h3>
-                    <ol className="list-decimal pl-5">
-                        {result.steps.map((s: string, i: number) => <li key={i}>{s}</li>)}
-                    </ol>
+
                 </div>
-                <div>
-                    <h3 className="font-medium">買い物リスト</h3>
-                    <ul className="list-disc pl-5">
-                        {result.shopping_lists.map((it: ShoppingItem, i:number) => (
-                            <li key={i}>{it.name} {it.qty}{it.unit}</li>
-                        ))}
-                    </ul>
-                </div>
-                <SaveButtons result={result}/>
-            </article>
-        )}
-    </main>
+                
+            </div>
+        </div>
+    </MainLayout>
+    // <main className="max-w-3xl mx-auto p-6 space-y-6">
+    //     <h1 className="text-2xl font-bold">夕食レシピ提案</h1>
+
+    //     <section className="space-y-2">
+    //         <label className="font-medium">使いたくない食材（改行/読点区切り）</label>
+    //         <textarea 
+    //             className="w-full border rounded p-2"
+    //             rows={3}
+    //             value={excludeText}
+    //             onChange={e => setExcludeText(e.target.value)}
+    //             placeholder="例：酢、ピーマン、セロリ"
+    //         />
+    //     </section>
+
+    //     <section className="space-y-2">
+    //         <div className="font-medium">使える調理器具</div>
+    //         <div className="flex flex-wrap gap-3">
+    //             {TOOL_PRESET.map(t => (
+    //                 <label key={t} className="flex items-center gap-2 border rounded px-3 py-2">
+    //                     <input type="checkbox" checked={tools.includes(t)} onChange={() => onToggleTool(t)} />
+    //                     {t}
+    //                 </label>
+    //             ))}
+    //         </div>
+    //     </section>
+
+    //     <section className="grid grid-cols-2 gap-4">
+    //         <div>
+    //             <label className="font-medium">人数</label>
+    //             <input type="number" min={1} className="block border rounded p-2 mt-1 w-28" value={servings} onChange={e => setServings(parseInt(e.target.value || "1",10))}/>
+    //         </div>
+    //         <div>
+    //             <label className="font-medium">予算</label>
+    //             <select className="block border rounded p-2 mt-1" value={budget} onChange={e => setBudget(e.target.value as BudgetLevel)}>
+    //                 <option value="low">low</option>
+    //                 <option value="medium">medium</option>
+    //                 <option value="high">high</option>
+    //             </select>
+    //         </div>
+    //     </section>
+
+    //     <section>
+    //         <label className="font-medium">目標</label> 
+    //         <div className="flex gap-3 mt-2">
+    //             {["平日夕食","洗い物少なめ","高たんぱく"].map(g => (
+    //         <button key={g}
+    //           onClick={() => setGoal(g as GoalType)}
+    //           className={`px-3 py-2 rounded border ${goal===g ? "bg-black text-white" : ""}`}>{g}</button>
+    //       ))}
+    //         </div>
+    //     </section>
+
+    //     <button disabled={loading} onClick={onPropose} className="px-4 py-2 rounded bg-blue-600 text-white disabled:opacity-50">
+    //         {loading ? "提案中..." : "レシピを提案"}
+    //     </button>
+
+    //     {err && <p className="text-red-600">{err}</p>}
+
+    //     {result && (
+    //         <article className="border rounded p-4 space-y-3">
+    //             <header className="flex items-center justify-between">
+    //                 <h2 className="text-xl font-semibold">{result.title}</h2>
+    //                 <span className="text-sm opacity-70">{result.cook_time_min}分</span>
+    //             </header>
+    //             <div>
+    //                 <h3 className="font-medium">材料</h3>
+    //                 <ul className="list-disc pl-5">
+    //                     {result.ingredients.map((it: Ingredient, i: number) => (
+    //                         <li key={i}>{it.name} {it.qty}{it.optional ? "（任意）" : ""}</li>
+    //                     ))}
+    //                 </ul>
+    //             </div>
+    //             <div>
+    //                 <h3 className="font-medium">手順</h3>
+    //                 <ol className="list-decimal pl-5">
+    //                     {result.steps.map((s: string, i: number) => <li key={i}>{s}</li>)}
+    //                 </ol>
+    //             </div>
+    //             <div>
+    //                 <h3 className="font-medium">買い物リスト</h3>
+    //                 <ul className="list-disc pl-5">
+    //                     {result.shopping_lists.map((it: ShoppingItem, i:number) => (
+    //                         <li key={i}>{it.name} {it.qty}{it.unit}</li>
+    //                     ))}
+    //                 </ul>
+    //             </div>
+    //             <SaveButtons result={result}/>
+    //         </article>
+    //     )}
+    // </main>
   )
 }
 
