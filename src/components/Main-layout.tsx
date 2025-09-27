@@ -1,4 +1,5 @@
 import Header from "./Header";
+import MobileNav from "./Mobile-nav";
 import Footer from "./Footer";
 import { User } from "@supabase/supabase-js";
 
@@ -17,6 +18,7 @@ export function MainLayout({ children, initialUser }: MainLayoutProps) {
                 </div>
             </main>
             <Footer />
+            <MobileNav />
         </div>
     );
 }

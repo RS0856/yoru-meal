@@ -160,7 +160,7 @@ export default async function Home() {
           </div>
           <Button asChild size="lg" className="h-12 lg:h-14 px-8 lg:px-12 text-base lg:text-lg">
             <Link href={"/propose"}>
-              <Plus />レシピを提案を始める
+              <Plus />レシピ提案を始める
             </Link>
           </Button>
         </section>
