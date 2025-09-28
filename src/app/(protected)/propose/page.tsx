@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import { MainLayout }from "@/components/Main-layout";
 import { User } from "@supabase/supabase-js";
 import { Card, CardHeader, CardTitle, CardContent,CardDescription } from "@/components/ui/card";
-import { ChefHat, Loader2 } from "lucide-react";
+import { ChefHat, Loader2, Heart, ShoppingCart, Clock } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -217,11 +217,63 @@ export default function ProposePage({ initialUser }: { initialUser: User | null 
                     </Card>
                 </div>
 
-                <div>
-
+                <div className="lg:col-span-1">
+                    <Card className="sticky top-24">
+                        <CardHeader>
+                            <CardTitle className="text-lg">💡提案のコツ</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4 text-sm">
+                            <div>
+                                <h4 className="font-medium mb-2">除外食材について</h4>
+                                <p className="text-muted-foreground">
+                                    アレルギーや苦手な食材を具体的に入力すると、より適切なレシピを提案できます。
+                                </p>
+                            </div>
+                            <div>
+                                <h4 className="font-medium mb-2">調理器具の選択</h4>
+                                <p className="text-muted-foreground">
+                                    お持ちの調理器具を選択することで、実際に作れるレシピのみを提案します。
+                                </p>
+                            </div>
+                            <div>
+                                <h4 className="font-medium mb-2">条件の設定</h4>
+                                <p className="text-muted-foreground">
+                                    人数・予算・目標を設定すると、より具体的で実用的なレシピを提案できます。
+                                </p>
+                            </div>
+                        </CardContent>
+                    </Card>
                 </div>
-                
             </div>
+
+            {/* 提案結果 */}
+            {result && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex flex-col sm:flex-row  sm:items-center justify-between gap-4 text-xl lg:text-2xl">
+                            <span>{result.title}</span>
+                            <div className="flex gap-3">
+                                <Button variant="outline" size="sm"  className="h-10 bg-transparent">
+                                    {/* TODO: 保存機能を実装する */}
+                                    <Heart className="mr-2 h-4 w-4"/>保存
+                                </Button>
+                                <Button size="sm"  className="h-10">
+                                    {/* TODO: 買い物リスト機能を実装する */}
+                                    <ShoppingCart className="mr-2 h-4 w-4"/>買い物リスト
+                                </Button>
+                            </div>
+                        </CardTitle>
+                        <div className="flex gap-6 text-base text-muted-foreground">
+                            <div className="flex items-center gap-2">
+                                <Clock className="h-5 w-5"/>{result.cook_time_min}
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="space-y-8">
+
+                    </CardContent>
+                </Card>
+            )}
         </div>
     </MainLayout>
     // <main className="max-w-3xl mx-auto p-6 space-y-6">
