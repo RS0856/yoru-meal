@@ -270,7 +270,50 @@ export default function ProposePage({ initialUser }: { initialUser: User | null 
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-8">
+                        {/* 材料 */}
+                        <div>
+                            <h3 className="font-semibold mb-4">材料</h3>
+                            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                {result.ingredients.map((item: Ingredient, index: number) => (
+                                    <div key={index} className="flex justify-between p-3 bg-muted rounded-lg">
+                                        <span className="font-medium">{item.name}</span>
+                                        <span className="text-muted-foreground">{item.qty}{item.unit}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
 
+                        {/* 作り方 */}
+                        <div>
+                            <h3 className="font-semibold mb-4 text-lg">作り方</h3>
+                            <ol className="space-y-4">
+                                {result.steps.map((step: string, index: number) => (
+                                    <li key={index} className="flex gap-4">
+                                        <span className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-medium">
+                                            {index + 1}
+                                        </span>
+                                        <span className="text-base leading-relaxed pt-1">{step}</span>
+                                    </li>
+                                ))}
+                            </ol>
+                        </div>
+
+                        {/* 使用する調理器具 */}
+                        {result.tools.length > 0 && (
+                            <div>
+                                <h3 className="font-semibold mb-4 text-lg">使用する調理器具</h3>
+                                <div className="flex flex-wrap gap-3">
+                                    {result.tools.map((tool: string, index: number) => {
+                                        const toolLabel = TOOL_PRESET.find(t => t === tool);
+                                        return (
+                                            <span key={index} className="px-4 py-2 bg-secondary text-secondary-foreground rounded-full text-sm font-medium">
+                                                {toolLabel}
+                                            </span>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             )}
