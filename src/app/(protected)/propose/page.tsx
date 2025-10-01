@@ -3,13 +3,14 @@ import { useToast } from "@/components/Toast";
 import React, { useState } from 'react'
 import { MainLayout }from "@/components/Main-layout";
 import { User } from "@supabase/supabase-js";
+import { ChefHat, Loader2, Heart, Clock } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent,CardDescription } from "@/components/ui/card";
-import { ChefHat, Loader2, Heart, ShoppingCart, Clock } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+
 const TOOL_PRESET = ["電子レンジ","フライパン","鍋","トースター"] as const;
 
 // 型定義
@@ -46,6 +47,8 @@ export default function ProposePage({ initialUser }: { initialUser: User | null 
     const [result, setResult] = useState<RecipeProposal | null>(null);
     const [loading, setLoading] = useState(false);
     const [err, setErr] = useState<string | null>(null);
+    const [saving, setSaving] = useState(false);
+    const { push } = useToast();
 
     const onToggleTool = (t: string) => 
         setTools(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev,t]);
@@ -100,6 +103,45 @@ export default function ProposePage({ initialUser }: { initialUser: User | null 
             setLoading(false);
         }
     };
+
+    const onSave = async () => {
+        if (!result) return;
+        
+        setSaving(true);
+        try {
+            const res = await fetch("/api/save", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(result)
+            });
+            
+            const contentType = res.headers.get("content-type") || "";
+            let data: unknown;
+            if (contentType.includes("application/json")) {
+                data = await res.json();
+            } else {
+                const text = await res.text();
+                try { 
+                    data = JSON.parse(text); 
+                } catch { 
+                    throw new Error(text.slice(0, 200) || "サーバーエラー"); 
+                }
+            }
+            
+            if (!res.ok) {
+                const msg = extractApiErrorMessage(data) ?? "保存に失敗しました";
+                throw new Error(msg);
+            }
+            
+            push({ text: "レシピを保存しました", type: "success" });
+        } catch (e: unknown) {
+            const message = e instanceof Error ? e.message : "不明なエラーが発生しました";
+            push({ text: message, type: "error" });
+        } finally {
+            setSaving(false);
+        }
+    };
+
 
   return (
     <MainLayout initialUser={initialUser}>
@@ -246,6 +288,15 @@ export default function ProposePage({ initialUser }: { initialUser: User | null 
                 </div>
             </div>
 
+            {/* エラー表示 */}
+            {err && (
+                <Card className="border-red-200 bg-red-50">
+                    <CardContent className="pt-6">
+                        <p className="text-red-600 text-center">{err}</p>
+                    </CardContent>
+                </Card>
+            )}
+
             {/* 提案結果 */}
             {result && (
                 <Card>
@@ -253,13 +304,24 @@ export default function ProposePage({ initialUser }: { initialUser: User | null 
                         <CardTitle className="flex flex-col sm:flex-row  sm:items-center justify-between gap-4 text-xl lg:text-2xl">
                             <span>{result.title}</span>
                             <div className="flex gap-3">
-                                <Button variant="outline" size="sm"  className="h-10 bg-transparent">
-                                    {/* TODO: 保存機能を実装する */}
-                                    <Heart className="mr-2 h-4 w-4"/>保存
-                                </Button>
-                                <Button size="sm"  className="h-10">
-                                    {/* TODO: 買い物リスト機能を実装する */}
-                                    <ShoppingCart className="mr-2 h-4 w-4"/>買い物リスト
+                                <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className="h-10 bg-transparent"
+                                    onClick={onSave}
+                                    disabled={saving}
+                                >
+                                    {saving ? (
+                                        <>
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                            保存中...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Heart className="mr-2 h-4 w-4"/>
+                                            保存
+                                        </>
+                                    )}
                                 </Button>
                             </div>
                         </CardTitle>
@@ -303,14 +365,13 @@ export default function ProposePage({ initialUser }: { initialUser: User | null 
                             <div>
                                 <h3 className="font-semibold mb-4 text-lg">使用する調理器具</h3>
                                 <div className="flex flex-wrap gap-3">
-                                    {result.tools.map((tool: string, index: number) => {
-                                        const toolLabel = TOOL_PRESET.find(t => t === tool);
-                                        return (
+                                    {result.tools
+                                        .filter(tool => TOOL_PRESET.includes(tool as typeof TOOL_PRESET[number]))
+                                        .map((tool: string, index: number) => (
                                             <span key={index} className="px-4 py-2 bg-secondary text-secondary-foreground rounded-full text-sm font-medium">
-                                                {toolLabel}
+                                                {tool}
                                             </span>
-                                        );
-                                    })}
+                                        ))}
                                 </div>
                             </div>
                         )}
@@ -319,142 +380,6 @@ export default function ProposePage({ initialUser }: { initialUser: User | null 
             )}
         </div>
     </MainLayout>
-    // <main className="max-w-3xl mx-auto p-6 space-y-6">
-    //     <h1 className="text-2xl font-bold">夕食レシピ提案</h1>
-
-    //     <section className="space-y-2">
-    //         <label className="font-medium">使いたくない食材（改行/読点区切り）</label>
-    //         <textarea 
-    //             className="w-full border rounded p-2"
-    //             rows={3}
-    //             value={excludeText}
-    //             onChange={e => setExcludeText(e.target.value)}
-    //             placeholder="例：酢、ピーマン、セロリ"
-    //         />
-    //     </section>
-
-    //     <section className="space-y-2">
-    //         <div className="font-medium">使える調理器具</div>
-    //         <div className="flex flex-wrap gap-3">
-    //             {TOOL_PRESET.map(t => (
-    //                 <label key={t} className="flex items-center gap-2 border rounded px-3 py-2">
-    //                     <input type="checkbox" checked={tools.includes(t)} onChange={() => onToggleTool(t)} />
-    //                     {t}
-    //                 </label>
-    //             ))}
-    //         </div>
-    //     </section>
-
-    //     <section className="grid grid-cols-2 gap-4">
-    //         <div>
-    //             <label className="font-medium">人数</label>
-    //             <input type="number" min={1} className="block border rounded p-2 mt-1 w-28" value={servings} onChange={e => setServings(parseInt(e.target.value || "1",10))}/>
-    //         </div>
-    //         <div>
-    //             <label className="font-medium">予算</label>
-    //             <select className="block border rounded p-2 mt-1" value={budget} onChange={e => setBudget(e.target.value as BudgetLevel)}>
-    //                 <option value="low">low</option>
-    //                 <option value="medium">medium</option>
-    //                 <option value="high">high</option>
-    //             </select>
-    //         </div>
-    //     </section>
-
-    //     <section>
-    //         <label className="font-medium">目標</label> 
-    //         <div className="flex gap-3 mt-2">
-    //             {["平日夕食","洗い物少なめ","高たんぱく"].map(g => (
-    //         <button key={g}
-    //           onClick={() => setGoal(g as GoalType)}
-    //           className={`px-3 py-2 rounded border ${goal===g ? "bg-black text-white" : ""}`}>{g}</button>
-    //       ))}
-    //         </div>
-    //     </section>
-
-    //     <button disabled={loading} onClick={onPropose} className="px-4 py-2 rounded bg-blue-600 text-white disabled:opacity-50">
-    //         {loading ? "提案中..." : "レシピを提案"}
-    //     </button>
-
-    //     {err && <p className="text-red-600">{err}</p>}
-
-    //     {result && (
-    //         <article className="border rounded p-4 space-y-3">
-    //             <header className="flex items-center justify-between">
-    //                 <h2 className="text-xl font-semibold">{result.title}</h2>
-    //                 <span className="text-sm opacity-70">{result.cook_time_min}分</span>
-    //             </header>
-    //             <div>
-    //                 <h3 className="font-medium">材料</h3>
-    //                 <ul className="list-disc pl-5">
-    //                     {result.ingredients.map((it: Ingredient, i: number) => (
-    //                         <li key={i}>{it.name} {it.qty}{it.optional ? "（任意）" : ""}</li>
-    //                     ))}
-    //                 </ul>
-    //             </div>
-    //             <div>
-    //                 <h3 className="font-medium">手順</h3>
-    //                 <ol className="list-decimal pl-5">
-    //                     {result.steps.map((s: string, i: number) => <li key={i}>{s}</li>)}
-    //                 </ol>
-    //             </div>
-    //             <div>
-    //                 <h3 className="font-medium">買い物リスト</h3>
-    //                 <ul className="list-disc pl-5">
-    //                     {result.shopping_lists.map((it: ShoppingItem, i:number) => (
-    //                         <li key={i}>{it.name} {it.qty}{it.unit}</li>
-    //                     ))}
-    //                 </ul>
-    //             </div>
-    //             <SaveButtons result={result}/>
-    //         </article>
-    //     )}
-    // </main>
   )
 }
 
-function SaveButtons({ result }: { result: RecipeProposal }) {
-    const [saving, setSaving] = useState(false);
-    const [msg, setMsg] = useState<string | null>(null);
-    const { push } = useToast();
-
-    const onSave = async () => {
-        setSaving(true);
-        setMsg(null);
-        try {
-            const res = await fetch("/api/save", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(result)
-            });
-            const contentType = res.headers.get("content-type") || "";
-            let data: unknown;
-            if (contentType.includes("application/json")) {
-                data = await res.json();
-            } else {
-                const text = await res.text();
-                try { data = JSON.parse(text); } catch { throw new Error(text.slice(0,200) || "サーバーエラー"); }
-            }
-            if (!res.ok) {
-                const msg = extractApiErrorMessage(data) ?? "保存に失敗しました";
-                throw new Error(msg);
-            }
-            push({ text: "保存しました", type: "success"});
-            setMsg("レシピを保存しました！");
-        } catch (e: unknown) {
-            const message = e instanceof Error ? e.message : "不明なエラーが発生しました";
-            push({ text: message, type: "error" });
-            setMsg(`エラー: ${message}`);
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    return (
-        <div className="flex items-center gap-3">
-            <button disabled={saving} onClick={onSave} className="px-3 py-2 rounded bg-green-600 text-white disabled:opacity-50">
-                {saving ? "保存中..." : "このレシピを保存"}
-            </button>
-            {msg && <span className="text-sm">{msg}</span>}
-        </div>
-    );
-}
