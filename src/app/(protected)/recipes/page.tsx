@@ -1,7 +1,12 @@
 import Link from "next/link";
 import { supabaseServer } from "@/app/lib/supabaseServer";
+import { User } from "@supabase/supabase-js";
+import { MainLayout } from "@/components/Main-layout";
+import { Button } from "@/components/ui/button";
+import { Plus, Clock, Calendar, ChefHat } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
-export default async function RecipesPage () {
+export default async function RecipesPage ({ initialUser }: { initialUser: User | null }) {
     const supabase = await supabaseServer();
 
     const { data: recipes, error } = await supabase
@@ -14,28 +19,71 @@ export default async function RecipesPage () {
     }
 
     return (
-        <main className="max-w-3xl mx-auto p-6 space-y-6">
-            <header className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold">保存したレシピ</h1>
-                <nav className="flex gap-3">
-                    <Link className="underline" href="/propose">提案へ</Link>
-                    <a className="underline" href="/api/auth/logout">ログアウトへ</a>
-                </nav>
-            </header>
+        <MainLayout initialUser={initialUser}>
+            <div className="container px-4 py-8 max-w-6xl mx-auto space-y-8">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <h1 className="text-3xl font-bold">保存したレシピ</h1>
+                        <p className="text-muted-foreground mt-2">
+                            {recipes?.length}件のレシピが保存されています
+                        </p>
+                    </div>
+                    <Button asChild size="sm">
+                        <Link href="/recipes">
+                            <Plus className="mr-2 h-4 w-4"/>新しいレシピを提案してもらう
+                        </Link>
+                    </Button>
+                </div>
 
-            <ul className="space-y-3">
-                {(recipes ?? []).map(r => (
-                    <li key={r.id} className="border rounded p-4 flex items-center justify-between">
-                        <div>
-                            <div className="font-medium">{r.title}</div>
-                            <div className="text-sm opacity-70">
-                                {r.cook_time_min ?? "-"}分・{new Date(r.created_at).toLocaleString("ja-JP")}
+                {recipes.length > 0 ? (
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {recipes.map((recipe) => (
+                            <Card key={recipe.id} className="group hover:shadow-lg transition-shadow">
+                                <CardHeader className="space-y-3">
+                                    <div className="flex items-start justify-between">
+                                        <CardTitle className="text-xl group-hover:text-primary transition-colors">{recipe.title}
+                                        </CardTitle>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                        <div className="flex items-center gap-1">
+                                            <Clock className="h-4 w-4"/>{recipe.cook_time_min ?? "-"}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                                        <Calendar className="h-4 w-4"/>{new Date(recipe.created_at).toLocaleString("ja-JP")}
+                                    </div>
+
+                                    <Button asChild className="w-full">
+                                        <Link href={`/recipes/${recipe.id}`}>レシピを見る</Link>
+                                    </Button>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                ) : (
+                    <Card className="text-center py-12">
+                        <CardContent className="space-y-6">
+                            <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center mx-auto">
+                                <ChefHat className="h-12 w-12 text-muted-foreground"></ChefHat>
                             </div>
-                        </div>
-                        <Link className="px-3 py-2 rounded border" href={`/recipes/${r.id}`}>詳細</Link>
-                    </li>
-                ))}
-            </ul>
-        </main>
+                            <div className="space-y-2">
+                                <h3 className="text-xl font-semibold">レシピがありません</h3>
+                                <p className="text-muted-foreground max-w-md mx-auto">
+                                    レシピ提案機能を使って、お気に入りのレシピを見つけて保存しましょう
+                                </p>
+                            </div>
+                            <Button asChild size="lg">
+                                <Link href="/propose">
+                                    <Plus className="mr-2 h-5 w-5"/>レシピを提案してもらう
+                                </Link>
+                            </Button>
+                        </CardContent>
+                    </Card>
+                )}
+            </div>
+        </MainLayout>
     );
 } 
