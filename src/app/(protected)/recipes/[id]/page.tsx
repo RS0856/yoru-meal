@@ -1,12 +1,16 @@
 import { supabaseServer } from "@/app/lib/supabaseServer";
+import { MainLayout } from "@/components/Main-layout";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+
 
 type Ingredient = { name: string; qty?: string | number; unit?: string; optional?: boolean };
 
 export default async function RecipeDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
     const supabase = await supabaseServer();
+    const { data: { user } } = await supabase.auth.getUser();
 
     const { data: recipe, error } = await supabase
         .from("recipes")
@@ -14,7 +18,21 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
         .eq("id", id)
         .single();
 
-    if (error || !recipe) notFound();
+    if (error || !recipe) {
+        return (
+            <MainLayout initialUser={user}>
+                <div className="container px-4 py-8 text-center">
+                    <h1 className="text-2xl font-bold mb-4">レシピが見つかりません</h1>
+                    <Button asChild>
+                        <Link href="/recipes">
+                            <ArrowLeft className="mr-2 h-4 w-4"/>                        
+                            レシピ一覧へ戻る
+                        </Link>
+                    </Button>
+                </div>
+            </MainLayout>
+        )
+    };
 
     return (
     <main className="max-w-3xl mx-auto p-6 space-y-6">
