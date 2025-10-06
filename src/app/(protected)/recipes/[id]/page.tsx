@@ -2,7 +2,8 @@ import { supabaseServer } from "@/app/lib/supabaseServer";
 import { MainLayout } from "@/components/Main-layout";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ShoppingCart } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 
 type Ingredient = { name: string; qty?: string | number; unit?: string; optional?: boolean };
@@ -35,42 +36,88 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
     };
 
     return (
-    <main className="max-w-3xl mx-auto p-6 space-y-6">
-        <header className="flex items-center justify-between">
-            <div>
-                <h1 className="text-2xl font-bold">{recipe.title}</h1>
-                <div className="text-sm opacity-70">
-                    {recipe.cook_time_min ?? "-"}分・{new Date(recipe.created_at).toLocaleString("ja-JP")}
+    <MainLayout initialUser={user}>
+        <div className="container px-4 py-8 max-w-4xl mx-auto space-y-8">
+            {/* タイトル */}
+            <div className="flex items-center gap-4">
+                <Button variant="ghost" size="icon" asChild>
+                    <Link href="/recipes">
+                        <ArrowLeft className="h-4 w-4"/>
+                    </Link>
+                </Button>
+                <div className="flex-1">
+                    <h1 className="text-3xl font-bold">{recipe.title}</h1>
                 </div>
             </div>
-            <nav className="flex gap-3">
-                <Link className="underline" href="/recipes">一覧</Link>
-                <Link className="underline" href="/shopping">買い物リスト</Link>
-            </nav>
-        </header>
 
-        <section>
-            <h2 className="font-semibold mb-2">材料</h2>
-            <ul className="list-disc pl-5">
-                {(recipe.ingredients ?? []).map((it: Ingredient, i: number) => (
-                    <li key={i}>{it.name} {it.qty}{it.unit}{it.optional ? "（任意）" : ""}</li>
-                ))}
-            </ul>
-        </section>
+            <div className="grid lg:grid-cols-3 gap-8">
+                {/* 材料リスト */}
+                <div className="lg:col-span1">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center justify-between">
+                                材料
+                                <Button>
+                                    <ShoppingCart className="mr-2 h-4 w-4"/>
+                                    買い物リスト
+                                </Button>
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-3">
+                                {recipe.ingredients.map((ingredient: Ingredient, index: number) => (
+                                    <div key={index} className="flex justify-between items-center p-3 bg-muted rounded-lg">
+                                        <span className="font-medium">{ingredient.name}</span>
+                                        <span className="text-sm text-muted-foreground">{ingredient.qty}{ingredient.unit}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
 
-        <section>
-            <h2 className="font-semibold mb-2">手順</h2>
-            <ol className="list-decimal pl-5 space-y-1">
-                {(recipe.steps ?? []).map((s: string, i: number) => <li key={i}>{s}</li>)}
-            </ol>
-        </section>
+                {/* 作り方 */}
+                <div className="lg:col-span2 space-y-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>作り方</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <ol className="space-y-4">
+                                {recipe.steps.map((step: string, index: number) => (
+                                    <li key={index} className="flex gap-4">
+                                        <span className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">
+                                            {index + 1}
+                                        </span>
+                                        <span className="text-base leading-relaxed pt-1">{step}</span>
+                                    </li>
+                                ))}
+                            </ol>
+                        </CardContent>
+                    </Card>
 
-        {recipe.tools?.length ? (
-            <section>
-                <h2 className="font-semibold mb-2">使用する調理器具</h2>
-                <p className="opacity-80 text-sm">{recipe.tools.join("、")}</p>
-            </section>
-        ) : null}
-    </main>
+                    {/* 使用する調理器具 */}
+                    <div className="space-y-6">
+                        {recipe.tools && recipe.tools.length > 0 && (
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>使用する調理器具</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="flex flex-wrap gap-2">
+                                        {recipe.tools.map((tool: string, index: number) => (
+                                            <span key={index} className="px-4 py-2 bg-secondary text-secondary-foreground rounded-full text-sm font-medium">
+                                                {tool}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </MainLayout>
     );
 }
