@@ -50,7 +50,7 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
                 </div>
             </div>
 
-            <div className="grid lg:grid-cols-3 gap-8">
+            <div className="grid lg:grid-cols-2 gap-8">
                 {/* 材料リスト */}
                 <div className="lg:col-span1">
                     <Card>
@@ -58,6 +58,7 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
                             <CardTitle className="flex items-center justify-between">
                                 材料
                                 <Button>
+                                    {/* TODO: 買い物リストへのリンク追加 */}
                                     <ShoppingCart className="mr-2 h-4 w-4"/>
                                     買い物リスト
                                 </Button>
