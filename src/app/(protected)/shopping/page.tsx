@@ -2,6 +2,9 @@ import { MainLayout } from "@/components/Main-layout";
 import { ShoppingCart, Plus } from "lucide-react";
 import { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import Link from "next/link";
 
 export default async function ShoppingPage({ initialUser }: { initialUser: User | null }) {
@@ -24,6 +27,22 @@ export default async function ShoppingPage({ initialUser }: { initialUser: User 
                         </Button>
                     </div>
 
+                    <Card>
+                        <CardHeader>
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="text-xl">進捗状況</CardTitle>
+                                <Badge variant="outline">/</Badge>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-2">
+                                <Progress value={50} className="h-2" />
+                                <p className="text-sm text-muted-foreground">
+                                    個完了 / 全個
+                                </p>
+                            </div>
+                        </CardContent>
+                    </Card>
                 </div>
                 
             </div>
