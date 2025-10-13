@@ -1,7 +1,7 @@
 "use client";
 
 import { MainLayout } from "@/components/Main-layout";
-import { ShoppingCart, Plus, Trash2 } from "lucide-react";
+import { ShoppingCart, Plus, Trash2, Check } from "lucide-react";
 import { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -77,6 +77,7 @@ export default function ShoppingPage({ initialUser }: { initialUser: User | null
     const filteredList = 
         selectedCategory === "all" ? shoppingList : shoppingList.filter((item) => item.category === selectedCategory);
     const totalItems = shoppingList.length;
+    const completedItems = shoppingList.filter((item) => item.checked).length;
 
     const groupedItems = categories.reduce(
         (acc, category) => {
@@ -227,6 +228,29 @@ export default function ShoppingPage({ initialUser }: { initialUser: User | null
                     </Card>
                 )}
                 
+                {/* サマリ */}
+                {totalItems > 0 && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <Check className="h-5 w-5"/>お買い物完了
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4">
+                                <p className="text-muted-foreground">すべてのアイテムをチェックしたら、お買い物完了です！</p>
+                                <div className="flex flex-col sm:flex-row gap-4">
+                                    <Button className="flex-1" disabled={completedItems !== totalItems}>
+                                        <Check className="h-4 w-4 mr-2"/>買い物完了
+                                    </Button>
+                                    <Button asChild variant="outline" className="flex-1 bg-transparent">
+                                        <Link href="/recipes">レシピを確認する</Link>
+                                    </Button>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
             </div>
         </MainLayout>
     );
