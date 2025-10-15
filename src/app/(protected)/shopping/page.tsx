@@ -78,6 +78,7 @@ export default function ShoppingPage({ initialUser }: { initialUser: User | null
         selectedCategory === "all" ? shoppingList : shoppingList.filter((item) => item.category === selectedCategory);
     const totalItems = shoppingList.length;
     const completedItems = shoppingList.filter((item) => item.checked).length;
+    const progress = totalItems > 0 ? (completedItems / totalItems) * 100 : 0;
 
     const groupedItems = categories.reduce(
         (acc, category) => {
@@ -110,14 +111,16 @@ export default function ShoppingPage({ initialUser }: { initialUser: User | null
                         <CardHeader>
                             <div className="flex items-center justify-between">
                                 <CardTitle className="text-xl">進捗状況</CardTitle>
-                                <Badge variant="outline">/</Badge>
+                                <Badge variant="outline">
+                                    {completedItems} / {totalItems}
+                                </Badge>
                             </div>
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-2">
-                                <Progress value={50} className="h-2" />
+                                <Progress value={progress} className="h-2" />
                                 <p className="text-sm text-muted-foreground">
-                                    個完了 / 全個
+                                    {completedItems}個完了 / 全{totalItems}個
                                 </p>
                             </div>
                         </CardContent>
