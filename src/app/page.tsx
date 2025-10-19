@@ -1,4 +1,3 @@
-import { supabaseServer } from "./lib/supabaseServer";
 import { MainLayout } from "@/components/Main-layout";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -51,11 +50,8 @@ const steps = [
 ]
 
 export default async function Home() {
-  const supabase = await supabaseServer();
-  const { data: { user } } = await supabase.auth.getUser();
-
   return (
-    <MainLayout initialUser={user}>
+    <MainLayout>
       <div className="space-y-16 lg:space-y-24">
         {/* Hero Section */}
         <section className="text-center space-y-8">

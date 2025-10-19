@@ -3,12 +3,12 @@
 import { Plus, List, ShoppingCart, Home, Menu, GithubIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { supabaseBrowser } from "@/app/lib/supabaseBrowser";
 
 type User = { id: string | null; email?: string | null };
-type Props = { initialUser: User | null };
 
 const LINKS = [
     { href: "/", label: "ホーム", icon: Home, protected: false },
@@ -17,9 +17,28 @@ const LINKS = [
     { href: "/shopping", label: "買い物リスト", icon: ShoppingCart, protected: true },
   ];
 
-export default function Header({ initialUser }: Props) {
-    const [user, setUser] = useState<User | null>(initialUser ?? null);
+export default function Header() {
+    const [user, setUser] = useState<User | null>(null);
     const pathname = usePathname();
+
+    useEffect(() => {
+        const supabase = supabaseBrowser();
+        
+        // 現在のユーザーを取得
+        const getUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            setUser(user);
+        };
+        
+        getUser();
+
+        // 認証状態の変更を監視
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            setUser(session?.user ?? null);
+        });
+
+        return () => subscription.unsubscribe();
+    }, []);
 
     return (
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">

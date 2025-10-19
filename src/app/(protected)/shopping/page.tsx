@@ -2,7 +2,6 @@
 
 import { MainLayout } from "@/components/Main-layout";
 import { ShoppingCart, Plus, Trash2, Check } from "lucide-react";
-import { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -62,7 +61,7 @@ const categoryColors: { [key: string]: string } = {
     その他: "bg-gray-100 text-gray-800",
 }
 
-export default function ShoppingPage({ initialUser }: { initialUser: User | null }) {
+export default function ShoppingPage() {
     const [shoppingList, setShoppingList] = useState<ShoppingItem[]>(initialShoppingList);
     const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
@@ -89,7 +88,7 @@ export default function ShoppingPage({ initialUser }: { initialUser: User | null
     )
 
     return (
-        <MainLayout initialUser={initialUser}>
+        <MainLayout>
             <div className="container px-4 py-8 max-w-4xl mx-auto space-y-8">
                 {/* ヘッダー */}
                 <div className="space-y-4">

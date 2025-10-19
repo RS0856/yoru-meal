@@ -1,12 +1,11 @@
 import Link from "next/link";
 import { supabaseServer } from "@/app/lib/supabaseServer";
-import { User } from "@supabase/supabase-js";
 import { MainLayout } from "@/components/Main-layout";
 import { Button } from "@/components/ui/button";
 import { Plus, Clock, Calendar, ChefHat } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
-export default async function RecipesPage ({ initialUser }: { initialUser: User | null }) {
+export default async function RecipesPage () {
     const supabase = await supabaseServer();
 
     const { data: recipes, error } = await supabase
@@ -19,7 +18,7 @@ export default async function RecipesPage ({ initialUser }: { initialUser: User 
     }
 
     return (
-        <MainLayout initialUser={initialUser}>
+        <MainLayout>
             <div className="container px-4 py-8 max-w-6xl mx-auto space-y-8">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>

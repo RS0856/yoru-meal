@@ -11,7 +11,6 @@ type Ingredient = { name: string; qty?: string | number; unit?: string; optional
 export default async function RecipeDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
     const supabase = await supabaseServer();
-    const { data: { user } } = await supabase.auth.getUser();
 
     const { data: recipe, error } = await supabase
         .from("recipes")
@@ -21,7 +20,7 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
 
     if (error || !recipe) {
         return (
-            <MainLayout initialUser={user}>
+            <MainLayout>
                 <div className="container px-4 py-8 text-center">
                     <h1 className="text-2xl font-bold mb-4">レシピが見つかりません</h1>
                     <Button asChild>
@@ -36,7 +35,7 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
     };
 
     return (
-    <MainLayout initialUser={user}>
+    <MainLayout>
         <div className="container px-4 py-8 max-w-4xl mx-auto space-y-8">
             {/* タイトル */}
             <div className="flex items-center gap-4">

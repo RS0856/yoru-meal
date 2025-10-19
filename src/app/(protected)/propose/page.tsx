@@ -2,7 +2,6 @@
 import { useToast } from "@/components/Toast";
 import React, { useState } from 'react'
 import { MainLayout }from "@/components/Main-layout";
-import { User } from "@supabase/supabase-js";
 import { ChefHat, Loader2, Heart, Clock } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent,CardDescription } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -38,7 +37,7 @@ function extractApiErrorMessage(data: unknown): string | null {
     return null;
 }
 
-export default function ProposePage({ initialUser }: { initialUser: User | null }) {
+export default function ProposePage() {
     const [excludeText, setExcludeText] = useState("");
     const [tools, setTools] = useState<string[]>(["電子レンジ"]);
     const [servings, setServings] = useState(1);
@@ -144,7 +143,7 @@ export default function ProposePage({ initialUser }: { initialUser: User | null 
 
 
   return (
-    <MainLayout initialUser={initialUser}>
+    <MainLayout>
         <div className="space-y-8 lg:space-y-12">
             <div className="text-center space-y-4">
                 <h1 className="text-3xl lg:text-4xl font-bold">レシピ提案</h1>
