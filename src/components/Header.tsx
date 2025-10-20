@@ -73,7 +73,7 @@ export default function Header() {
                         })}
                     </nav>
 
-                    <Button>
+                    <Button className="bg-[#24292e] hover:bg-[#1a1e22] text-white">
                         <GithubIcon className="h-4 w-4" />
                         {user ? (
                         <a href="/api/auth/logout" className="">ログアウト</a>
