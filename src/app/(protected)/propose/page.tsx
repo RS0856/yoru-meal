@@ -68,7 +68,6 @@ export default function ProposePage() {
                     exclude_ingredients: parseExclude(excludeText),
                     available_tools:tools,
                     servings,
-                    constraints: { no_vinegar: true },
                     goals: [goal],
                     budget_level: budget,
                     locale: "JP"

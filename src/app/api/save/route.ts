@@ -15,11 +15,11 @@ export async function POST(req: NextRequest) {
         const { data: recipe, error: rErr } = await supabase.from("recipes").insert({
             user_id: user.id,
             title: parsed.title,
+            description: parsed.description ?? null,
             ingredients: parsed.ingredients,
             steps: parsed.steps,
             cook_time_min: parsed.cook_time_min,
             tools: parsed.tools,
-            constraints: { no_vinegar: true }
         })
         .select()
         .single();

@@ -9,8 +9,7 @@ const InputSchema = z.object({
     exclude_ingredients: z.array(z.string()).default([]),
     available_tools: z.array(z.string()).default([]),
     servings: z.number().int().positive().default(1),
-    constraints: z.object({ no_vinegar: z.boolean().default(true) }).default({ no_vinegar: true }),
-    goals: z.array(z.string()).default(["平日夕食"]),
+    goals: z.array(z.string()).default(["時短"]),
     budget_level: z.enum(["low", "medium", "high"]).default("low"),
     locale: z.string().default("JP")
 });
@@ -62,21 +61,24 @@ export async function POST(req: NextRequest) {
         const system = [
             "あなたは一人暮らし社会人向けの夕食レシピ支援アシスタントです。",
             "厳密なJSONのみを出力してください。コードブロックは不要です。",
-            "酢は使用禁止（no_vinegar=trueの場合）。",
+            "日本語で出力してください。",
+            "descriptionは200文字以内で、レシピの概要を説明してください。",
             "除外食材は ingredients と shopping_lists に含めないでください。",
             "調理時間は原則30分以内（最大45分）。日本で入手しやすい食材を優先。",
-            "分量は servings（人数）に合わせてください。"
+            "分量は servings（人数）に合わせてください。",
+            "shopping_listsの各Itemにはtag（肉、魚、野菜、調味料、その他）を付与してください"
           ].join("\n");
 
           const user = JSON.stringify({
             ...parsed,
             output_schema: {
                 title: "string",
+                description: "string?",
                 cook_time_min: "number",
                 ingredients: [{ name: "string", qty: "number", unit: "string", optional: "boolean?" }],
                 steps: ["string"],
                 tools: ["string"],
-                shopping_lists: [{ name: "string", qty: "number", unit: "string" }],
+                shopping_lists: [{ name: "string", qty: "number", unit: "string", tag: "肉|魚|野菜|調味料|その他" }],
                 notes: ["string"]
             }
           });
@@ -86,15 +88,16 @@ export async function POST(req: NextRequest) {
 
           //失敗したら1回だけリトライ
           if (!parseOut.success) {
-            const reinforce = system + "\n必ず有効なJSONのみで返答し、未定義・NaN・コメントは使用しないこと。";
-            text = await callLLM(client, system, user);
+            const reinforceSystem = system + "\n必ず有効なJSONのみで返答し、未定義・NaN・コメントは使用しないこと。";
+            text = await callLLM(client, reinforceSystem, user);
             parseOut = OutputSchema.safeParse(JSON.parse(text));
           }
           if (!parseOut.success) {
             return NextResponse.json({ error: "LLM出力の検証に失敗", issues: parseOut.error.flatten() }, { status: 422 });
           }
           return NextResponse.json(parseOut.data);
-    } catch (e: any) {
-        return NextResponse.json({ error: e?.message ?? "unknown error" }, { status: 500 });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : "unknown error";
+        return NextResponse.json({ error: message }, { status: 500 });
     }
 }
