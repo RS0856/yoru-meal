@@ -3,14 +3,14 @@ import { supabaseServer } from "@/app/lib/supabaseServer";
 import { MainLayout } from "@/components/Main-layout";
 import { Button } from "@/components/ui/button";
 import { Plus, Clock, Calendar, ChefHat } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 
 export default async function RecipesPage () {
     const supabase = await supabaseServer();
 
     const { data: recipes, error } = await supabase
     .from("recipes")
-    .select("id,title,cook_time_min,created_at")
+    .select("id,title,description,cook_time_min,created_at")
     .order("created_at",{ ascending: false });
 
     if (error) {
@@ -43,6 +43,7 @@ export default async function RecipesPage () {
                                         <CardTitle className="text-xl group-hover:text-primary transition-colors">{recipe.title}
                                         </CardTitle>
                                     </div>
+                                    <CardDescription className="text-base line-clamp-2">{recipe.description}</CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
