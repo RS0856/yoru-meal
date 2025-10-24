@@ -17,6 +17,15 @@ export default async function RecipesPage () {
         return <main className="max-w-3xl mx-auto p-6">読み込みエラー：{error.message}</main>;
     }
 
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString("ja-JP", { 
+            year: "numeric", 
+            month: "long", 
+            day: "numeric" 
+        });
+    };
+
     return (
         <MainLayout>
             <div className="container px-4 py-8 max-w-6xl mx-auto space-y-8">
@@ -53,7 +62,8 @@ export default async function RecipesPage () {
                                     </div>
 
                                     <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                        <Calendar className="h-4 w-4"/>{new Date(recipe.created_at).toLocaleString("ja-JP")}
+                                        <Calendar className="h-4 w-4"/>
+                                        {formatDate(recipe.created_at)}
                                     </div>
 
                                     <Button asChild className="w-full">
