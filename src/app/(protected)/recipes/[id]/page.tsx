@@ -2,8 +2,8 @@ import { supabaseServer } from "@/app/lib/supabaseServer";
 import { MainLayout } from "@/components/Main-layout";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ShoppingCart } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { ArrowLeft, ShoppingCart ,Clock, Calendar } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 
 
 type Ingredient = { name: string; qty?: string | number; unit?: string; optional?: boolean };
@@ -14,7 +14,7 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
 
     const { data: recipe, error } = await supabase
         .from("recipes")
-        .select("id, title,cook_time_min, ingredients, steps, tools, created_at")
+        .select("id, title, description, cook_time_min, ingredients, steps, tools, created_at")
         .eq("id", id)
         .single();
 
@@ -34,6 +34,15 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
         )
     };
 
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString("ja-JP", { 
+            year: "numeric", 
+            month: "long", 
+            day: "numeric" 
+        });
+    };
+
     return (
     <MainLayout>
         <div className="container px-4 py-8 max-w-4xl mx-auto space-y-8">
@@ -48,6 +57,25 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
                     <h1 className="text-3xl font-bold">{recipe.title}</h1>
                 </div>
             </div>
+
+            {/* レシピ概要 */}
+            <Card>
+                <CardHeader>
+                    <CardDescription className="text-base">
+                        {recipe.description}
+                    </CardDescription>
+                    <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                            <Clock className="h-4 w-4"/>
+                            {recipe.cook_time_min}
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <Calendar className="h-4 w-4"/>
+                            {formatDate(recipe.created_at)}
+                        </div>
+                    </div>
+                </CardHeader>
+            </Card>
 
             <div className="grid lg:grid-cols-2 gap-8">
                 {/* 材料リスト */}
