@@ -2,7 +2,8 @@ import { supabaseServer } from "@/app/lib/supabaseServer";
 import { MainLayout } from "@/components/Main-layout";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ShoppingCart ,Clock, Calendar } from "lucide-react";
+import { ArrowLeft, Clock, Calendar } from "lucide-react";
+import { ShoppingListButton } from "@/components/ShoppingListButton";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 
 
@@ -84,11 +85,10 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
                         <CardHeader>
                             <CardTitle className="flex items-center justify-between">
                                 材料
-                                <Button>
-                                    {/* TODO: 買い物リストへのリンク追加 */}
-                                    <ShoppingCart className="mr-2 h-4 w-4"/>
-                                    買い物リスト
-                                </Button>
+                                <ShoppingListButton 
+                                    recipeId={recipe.id} 
+                                    ingredients={recipe.ingredients} 
+                                />
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
