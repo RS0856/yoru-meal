@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const ItemTag = z.enum(["肉", "魚", "野菜", "調味料", "その他"]);
+export const ItemCategory = z.enum(["肉", "魚", "野菜", "調味料", "その他"]);
 
 export const Ingredient = z.object({
     name: z.string(),
@@ -13,7 +13,7 @@ export const ShoppingItem = z.object({
     name: z.string(),
     qty: z.number(),
     unit: z.string(),
-    tag: ItemTag.optional()
+    category: ItemCategory.optional()
 });
 
 export const OutputSchema = z.object({

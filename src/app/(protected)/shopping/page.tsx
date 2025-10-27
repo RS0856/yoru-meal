@@ -7,50 +7,24 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 
 interface ShoppingItem {
     id: string
     name: string
-    amount: string
+    qty: number
+    unit: string
     category: string
     checked: boolean
-    recipeTitle: string
 }
 
-// Mock shopping list data
-const initialShoppingList: ShoppingItem[] = [
-    { id: "1", name: "鶏もも肉", amount: "300g", category: "肉類", checked: false, recipeTitle: "鶏肉と野菜の照り焼き" },
-    { id: "2", name: "ピーマン", amount: "2個", category: "野菜", checked: false, recipeTitle: "鶏肉と野菜の照り焼き" },
-    { id: "3", name: "玉ねぎ", amount: "1/2個", category: "野菜", checked: true, recipeTitle: "鶏肉と野菜の照り焼き" },
-    { id: "4", name: "にんじん", amount: "1/3本", category: "野菜", checked: false, recipeTitle: "鶏肉と野菜の照り焼き" },
-    {
-      id: "5",
-      name: "しょうゆ",
-      amount: "大さじ2",
-      category: "調味料",
-      checked: true,
-      recipeTitle: "鶏肉と野菜の照り焼き",
-    },
-    {
-      id: "6",
-      name: "みりん",
-      amount: "大さじ2",
-      category: "調味料",
-      checked: false,
-      recipeTitle: "鶏肉と野菜の照り焼き",
-    },
-    { id: "7", name: "砂糖", amount: "大さじ1", category: "調味料", checked: true, recipeTitle: "鶏肉と野菜の照り焼き" },
-    {
-      id: "8",
-      name: "サラダ油",
-      amount: "大さじ1",
-      category: "調味料",
-      checked: false,
-      recipeTitle: "鶏肉と野菜の照り焼き",
-    },
-  ]
+interface ShoppingListData {
+    recipe_id: string
+    recipe_title: string
+    items: ShoppingItem[]
+}
+
 
 const categories = ["肉","魚","野菜","調味料","その他"];
 const categoryColors: { [key: string]: string } = {
@@ -62,8 +36,11 @@ const categoryColors: { [key: string]: string } = {
 }
 
 export default function ShoppingPage() {
-    const [shoppingList, setShoppingList] = useState<ShoppingItem[]>(initialShoppingList);
+    const [shoppingList, setShoppingList] = useState<ShoppingItem[]>([]);
     const [selectedCategory, setSelectedCategory] = useState<string>("all");
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [recipeTitle, setRecipeTitle] = useState<string>("");
 
     const toggleItem = (id: string) => {
         setShoppingList(prev => prev.map(item => item.id === id ? { ...item, checked: !item.checked } : item));
@@ -72,6 +49,53 @@ export default function ShoppingPage() {
     const removeItem = (id: string) => {
         setShoppingList(prev => prev.filter(item => item.id !== id));
     }
+
+    // データ取得
+    useEffect(() => {
+        const fetchShoppingList = async () => {
+            try {
+                setIsLoading(true);
+                setError(null);
+                
+                const response = await fetch("/api/shopping/latest");
+                
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        throw new Error("ログインが必要です");
+                    }
+                    throw new Error("買い物リストの取得に失敗しました");
+                }
+                
+                const data: ShoppingListData | null = await response.json();
+                
+                if (data) {
+                    // APIから取得したデータをShoppingItem形式に変換
+                    const items: ShoppingItem[] = data.items.map((item, index) => ({
+                        id: `${data.recipe_id}-${index}`,
+                        name: item.name,
+                        qty: item.qty,
+                        unit: item.unit,
+                        category: item.category,
+                        checked: item.checked || false
+                    }));
+                    
+                    setShoppingList(items);
+                    setRecipeTitle(data.recipe_title);
+                } else {
+                    setShoppingList([]);
+                    setRecipeTitle("");
+                }
+            } catch (err) {
+                console.error("買い物リスト取得エラー:", err);
+                setError(err instanceof Error ? err.message : "買い物リストの取得に失敗しました");
+                setShoppingList([]);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchShoppingList();
+    }, []);
 
     const filteredList = 
         selectedCategory === "all" ? shoppingList : shoppingList.filter((item) => item.category === selectedCategory);
@@ -149,8 +173,38 @@ export default function ShoppingPage() {
                     })}
                 </div>
 
+                {/* ローディング状態 */}
+                {isLoading && (
+                    <Card className="text-center py-12">
+                        <CardContent>
+                            <div className="space-y-4">
+                                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+                                <p className="text-muted-foreground">買い物リストを読み込み中...</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+
+                {/* エラー状態 */}
+                {error && !isLoading && (
+                    <Card className="text-center py-12">
+                        <CardContent className="space-y-6">
+                            <div className="w-24 h-24 rounded-full bg-destructive/10 flex items-center justify-center mx-auto">
+                                <ShoppingCart className="h-12 w-12 text-destructive"/>
+                            </div>
+                            <div className="space-y-2">
+                                <h3 className="text-xl font-semibold text-destructive">エラーが発生しました</h3>
+                                <p className="text-muted-foreground max-w-md mx-auto">{error}</p>
+                            </div>
+                            <Button onClick={() => window.location.reload()}>
+                                再読み込み
+                            </Button>
+                        </CardContent>
+                    </Card>
+                )}
+
                 {/* 買い物リスト */}
-                {totalItems > 0 ? (
+                {!isLoading && !error && totalItems > 0 && (
                     <div className="space-y-6">
                         {categories.map((category) => {
                             const categoryItems = groupedItems[category]
@@ -184,10 +238,10 @@ export default function ShoppingPage() {
                                                                 {item.name}
                                                             </span>
                                                             <span className={`text-sm ${item.checked ? "line-through text-muted-foreground" : "text-muted-foreground"}`}>
-                                                                {item.amount}
+                                                                {item.qty}{item.unit}
                                                             </span>
                                                         </div>
-                                                        <p className="text-xs text-muted-foreground mt-1">{item.recipeTitle}</p>
+                                                        <p className="text-xs text-muted-foreground mt-1">{recipeTitle}</p>
                                                     </div>
                                                     <Button 
                                                         variant="ghost" 
@@ -204,7 +258,10 @@ export default function ShoppingPage() {
                             )
                         })}
                     </div>
-                ) : (
+                )}
+
+                {/* 空の状態 */}
+                {!isLoading && !error && totalItems === 0 && (
                     <Card className="text-center py-12">
                         <CardContent className="space-y-6">
                             <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center mx-auto">
@@ -231,7 +288,7 @@ export default function ShoppingPage() {
                 )}
                 
                 {/* サマリ */}
-                {totalItems > 0 && (
+                {!isLoading && !error && totalItems > 0 && (
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">

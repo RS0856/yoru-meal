@@ -34,11 +34,11 @@ export async function POST(req: NextRequest) {
             .eq("recipe_id", recipe_id);
 
         // 新しい買い物リストを作成
-        const shoppingItems = ingredients.map((ingredient: any) => ({
+        const shoppingItems = ingredients.map((ingredient: { name: string; qty?: number; unit?: string }) => ({
             name: ingredient.name,
             qty: ingredient.qty || 1,
             unit: ingredient.unit || "",
-            tag: "その他", // デフォルトタグ
+            category: "その他", // デフォルトカテゴリ
             checked: false
         }));
 
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
         if (insertError) throw insertError;
 
         return NextResponse.json({ ok: true });
-    } catch (e: any) {
-        return NextResponse.json({ error: e?.message ?? "unknown error" }, { status: 500 });
+    } catch (e: unknown) {
+        return NextResponse.json({ error: e instanceof Error ? e.message : "unknown error" }, { status: 500 });
     }
 }

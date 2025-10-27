@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
             "除外食材は ingredients と shopping_lists に含めないでください。",
             "調理時間は原則30分以内（最大45分）。日本で入手しやすい食材を優先。",
             "分量は servings（人数）に合わせてください。",
-            "shopping_listsの各Itemにはtag（肉、魚、野菜、調味料、その他）を付与してください"
+            "shopping_listsの各Itemにはcategory（肉、魚、野菜、調味料、その他）を付与してください"
           ].join("\n");
 
           const user = JSON.stringify({
@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
                 ingredients: [{ name: "string", qty: "number", unit: "string", optional: "boolean?" }],
                 steps: ["string"],
                 tools: ["string"],
-                shopping_lists: [{ name: "string", qty: "number", unit: "string", tag: "肉|魚|野菜|調味料|その他" }],
+                shopping_lists: [{ name: "string", qty: "number", unit: "string", category: "肉|魚|野菜|調味料|その他" }],
                 notes: ["string"]
             }
           });
