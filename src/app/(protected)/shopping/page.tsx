@@ -41,6 +41,7 @@ export default function ShoppingPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [recipeTitle, setRecipeTitle] = useState<string>("");
+    const [isCompleted, setIsCompleted] = useState(false);
 
     const toggleItem = (id: string) => {
         setShoppingList(prev => prev.map(item => item.id === id ? { ...item, checked: !item.checked } : item));
@@ -48,6 +49,14 @@ export default function ShoppingPage() {
 
     const removeItem = (id: string) => {
         setShoppingList(prev => prev.filter(item => item.id !== id));
+    }
+
+    const handleComplete = () => {
+        setIsCompleted(true);
+        // 完了メッセージを3秒後に消す
+        setTimeout(() => {
+            setIsCompleted(false);
+        }, 3000);
     }
 
     // データ取得
@@ -149,6 +158,21 @@ export default function ShoppingPage() {
                         </CardContent>
                     </Card>
                 </div>
+
+                {/* 完了メッセージ */}
+                {isCompleted && (
+                    <Card className="bg-green-50 border-green-200">
+                        <CardContent className="pt-6">
+                            <div className="flex items-center justify-center gap-3">
+                                <Check className="h-8 w-8 text-green-600"/>
+                                <div className="text-center">
+                                    <p className="text-lg font-semibold text-green-800">お買い物完了お疲れ様でした！</p>
+                                    <p className="text-sm text-green-600 mt-1">美味しい料理を楽しんでくださいね</p>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
 
                 {/* カテゴリフィルタ */}
                 <div className="flex flex-wrap gap-2">
@@ -299,7 +323,11 @@ export default function ShoppingPage() {
                             <div className="space-y-4">
                                 <p className="text-muted-foreground">すべてのアイテムをチェックしたら、お買い物完了です！</p>
                                 <div className="flex flex-col sm:flex-row gap-4">
-                                    <Button className="flex-1" disabled={completedItems !== totalItems}>
+                                    <Button 
+                                        className="flex-1" 
+                                        disabled={completedItems !== totalItems}
+                                        onClick={handleComplete}
+                                    >
                                         <Check className="h-4 w-4 mr-2"/>買い物完了
                                     </Button>
                                     <Button asChild variant="outline" className="flex-1 bg-transparent">
