@@ -53,10 +53,10 @@ export default function ShoppingPage() {
 
     const handleComplete = () => {
         setIsCompleted(true);
-        // 完了メッセージを3秒後に消す
+        // 完了メッセージを5秒後に消す
         setTimeout(() => {
             setIsCompleted(false);
-        }, 3000);
+        }, 5000);
     }
 
     // データ取得
@@ -158,21 +158,6 @@ export default function ShoppingPage() {
                         </CardContent>
                     </Card>
                 </div>
-
-                {/* 完了メッセージ */}
-                {isCompleted && (
-                    <Card className="bg-green-50 border-green-200">
-                        <CardContent className="pt-6">
-                            <div className="flex items-center justify-center gap-3">
-                                <Check className="h-8 w-8 text-green-600"/>
-                                <div className="text-center">
-                                    <p className="text-lg font-semibold text-green-800">お買い物完了お疲れ様でした！</p>
-                                    <p className="text-sm text-green-600 mt-1">美味しい料理を楽しんでくださいね</p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                )}
 
                 {/* カテゴリフィルタ */}
                 <div className="flex flex-wrap gap-2">
@@ -333,6 +318,21 @@ export default function ShoppingPage() {
                                     <Button asChild variant="outline" className="flex-1 bg-transparent">
                                         <Link href="/recipes">レシピを確認する</Link>
                                     </Button>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+
+                {/* 完了メッセージ */}
+                {isCompleted && (
+                    <Card className="bg-green-50 border-green-200">
+                        <CardContent className="pt-6">
+                            <div className="flex items-center justify-center gap-3">
+                                <Check className="h-8 w-8 text-green-600"/>
+                                <div className="text-center">
+                                    <p className="text-lg font-semibold text-green-800">お買い物完了! お疲れ様でした!</p>
+                                    <p className="text-sm text-green-600 mt-1">美味しい料理を楽しんでくださいね</p>
                                 </div>
                             </div>
                         </CardContent>
