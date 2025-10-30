@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 
 interface ShoppingItem {
@@ -42,6 +42,10 @@ export default function ShoppingPage() {
     const [error, setError] = useState<string | null>(null);
     const [recipeTitle, setRecipeTitle] = useState<string>("");
     const [isCompleted, setIsCompleted] = useState(false);
+    const [countdown, setCountdown] = useState<number>(0); // 0-100
+    const [prevList, setPrevList] = useState<ShoppingItem[] | null>(null);
+    const completeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const countdownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     const toggleItem = (id: string) => {
         setShoppingList(prev => prev.map(item => item.id === id ? { ...item, checked: !item.checked } : item));
@@ -52,12 +56,57 @@ export default function ShoppingPage() {
     }
 
     const handleComplete = () => {
+        // 表示上リストを空にし、元データを保持
+        setPrevList(shoppingList);
+        setShoppingList([]);
         setIsCompleted(true);
-        // 完了メッセージを5秒後に消す
-        setTimeout(() => {
+        // カウントダウン開始（10秒→0）
+        setCountdown(100);
+        const startAt = Date.now();
+        if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
+        countdownTimerRef.current = setInterval(() => {
+            const elapsed = Date.now() - startAt;
+            const remainRatio = Math.max(0, 1 - elapsed / 10000);
+            setCountdown(Math.round(remainRatio * 100));
+        }, 100);
+        // 10秒後に自動的に完了メッセージを閉じ、復元不可にする
+        if (completeTimerRef.current) clearTimeout(completeTimerRef.current);
+        completeTimerRef.current = setTimeout(() => {
             setIsCompleted(false);
-        }, 5000);
+            setPrevList(null);
+            setCountdown(0);
+            if (countdownTimerRef.current) {
+                clearInterval(countdownTimerRef.current);
+                countdownTimerRef.current = null;
+            }
+            completeTimerRef.current = null;
+        }, 10000);
     }
+
+    const handleUndo = () => {
+        if (prevList) {
+            setShoppingList(prevList);
+        }
+        setPrevList(null);
+        setIsCompleted(false);
+        setCountdown(0);
+        if (completeTimerRef.current) {
+            clearTimeout(completeTimerRef.current);
+            completeTimerRef.current = null;
+        }
+        if (countdownTimerRef.current) {
+            clearInterval(countdownTimerRef.current);
+            countdownTimerRef.current = null;
+        }
+    }
+
+    // アンマウント時のクリーンアップ
+    useEffect(() => {
+        return () => {
+            if (completeTimerRef.current) clearTimeout(completeTimerRef.current);
+            if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
+        };
+    }, []);
 
     // データ取得
     useEffect(() => {
@@ -327,13 +376,17 @@ export default function ShoppingPage() {
                 {/* 完了メッセージ */}
                 {isCompleted && (
                     <Card className="bg-green-50 border-green-200">
-                        <CardContent className="pt-6">
-                            <div className="flex items-center justify-center gap-3">
+                        <CardContent className="pt-8 pb-8">
+                            <div className="flex flex-col items-center justify-center text-center gap-3 w-full">
                                 <Check className="h-8 w-8 text-green-600"/>
-                                <div className="text-center">
+                                <div>
                                     <p className="text-lg font-semibold text-green-800">お買い物完了! お疲れ様でした!</p>
                                     <p className="text-sm text-green-600 mt-1">美味しい料理を楽しんでくださいね</p>
                                 </div>
+                                <div className="w-full max-w-md mt-1">
+                                    <Progress value={countdown} className="h-1" />
+                                </div>
+                                <Button variant="outline" className="mt-3" onClick={handleUndo}>元に戻す</Button>
                             </div>
                         </CardContent>
                     </Card>
