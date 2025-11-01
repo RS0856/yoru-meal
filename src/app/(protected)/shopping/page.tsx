@@ -42,10 +42,7 @@ export default function ShoppingPage() {
     const [error, setError] = useState<string | null>(null);
     const [recipeTitle, setRecipeTitle] = useState<string>("");
     const [isCompleted, setIsCompleted] = useState(false);
-    const [countdown, setCountdown] = useState<number>(0); // 0-100
-    const [prevList, setPrevList] = useState<ShoppingItem[] | null>(null);
-    const completeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const countdownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const messageTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const toggleItem = (id: string) => {
         setShoppingList(prev => prev.map(item => item.id === id ? { ...item, checked: !item.checked } : item));
@@ -55,56 +52,40 @@ export default function ShoppingPage() {
         setShoppingList(prev => prev.filter(item => item.id !== id));
     }
 
-    const handleComplete = () => {
-        // 表示上リストを空にし、元データを保持
-        setPrevList(shoppingList);
-        setShoppingList([]);
-        setIsCompleted(true);
-        // カウントダウン開始（10秒→0）
-        setCountdown(100);
-        const startAt = Date.now();
-        if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
-        countdownTimerRef.current = setInterval(() => {
-            const elapsed = Date.now() - startAt;
-            const remainRatio = Math.max(0, 1 - elapsed / 10000);
-            setCountdown(Math.round(remainRatio * 100));
-        }, 100);
-        // 10秒後に自動的に完了メッセージを閉じ、復元不可にする
-        if (completeTimerRef.current) clearTimeout(completeTimerRef.current);
-        completeTimerRef.current = setTimeout(() => {
-            setIsCompleted(false);
-            setPrevList(null);
-            setCountdown(0);
-            if (countdownTimerRef.current) {
-                clearInterval(countdownTimerRef.current);
-                countdownTimerRef.current = null;
+    const handleComplete = async () => {
+        // データベースから買い物リストを即座に削除
+        try {
+            const response = await fetch("/api/shopping/delete", {
+                method: "DELETE",
+            });
+            if (!response.ok) {
+                console.error("買い物リストの削除に失敗しました");
+                alert("買い物リストの削除に失敗しました");
+                return;
             }
-            completeTimerRef.current = null;
-        }, 10000);
-    }
+        } catch (err) {
+            console.error("買い物リスト削除エラー:", err);
+            alert("買い物リストの削除に失敗しました");
+            return;
+        }
 
-    const handleUndo = () => {
-        if (prevList) {
-            setShoppingList(prevList);
-        }
-        setPrevList(null);
-        setIsCompleted(false);
-        setCountdown(0);
-        if (completeTimerRef.current) {
-            clearTimeout(completeTimerRef.current);
-            completeTimerRef.current = null;
-        }
-        if (countdownTimerRef.current) {
-            clearInterval(countdownTimerRef.current);
-            countdownTimerRef.current = null;
-        }
+        // 表示上リストを空にする
+        setShoppingList([]);
+        setRecipeTitle("");
+        setIsCompleted(true);
+
+        // 完了メッセージを5秒後に自動で閉じる
+        if (messageTimerRef.current) clearTimeout(messageTimerRef.current);
+        messageTimerRef.current = setTimeout(() => {
+            setIsCompleted(false);
+            messageTimerRef.current = null;
+        }, 5000);
     }
 
     // アンマウント時のクリーンアップ
     useEffect(() => {
         return () => {
-            if (completeTimerRef.current) clearTimeout(completeTimerRef.current);
-            if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
+            if (messageTimerRef.current) clearTimeout(messageTimerRef.current);
         };
     }, []);
 
@@ -383,10 +364,6 @@ export default function ShoppingPage() {
                                     <p className="text-lg font-semibold text-green-800">お買い物完了! お疲れ様でした!</p>
                                     <p className="text-sm text-green-600 mt-1">美味しい料理を楽しんでくださいね</p>
                                 </div>
-                                <div className="w-full max-w-md mt-1">
-                                    <Progress value={countdown} className="h-1" />
-                                </div>
-                                <Button variant="outline" className="mt-3" onClick={handleUndo}>元に戻す</Button>
                             </div>
                         </CardContent>
                     </Card>
