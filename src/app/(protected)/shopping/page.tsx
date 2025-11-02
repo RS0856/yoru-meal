@@ -96,7 +96,7 @@ export default function ShoppingPage() {
                 setIsLoading(true);
                 setError(null);
                 
-                const response = await fetch("/api/shopping/latest");
+                const response = await fetch("/api/shopping/list");
                 
                 if (!response.ok) {
                     if (response.status === 401) {
@@ -105,21 +105,29 @@ export default function ShoppingPage() {
                     throw new Error("買い物リストの取得に失敗しました");
                 }
                 
-                const data: ShoppingListData | null = await response.json();
+                const data: ShoppingListData[] = await response.json();
                 
-                if (data) {
-                    // APIから取得したデータをShoppingItem形式に変換
-                    const items: ShoppingItem[] = data.items.map((item, index) => ({
-                        id: `${data.recipe_id}-${index}`,
-                        name: item.name,
-                        qty: item.qty,
-                        unit: item.unit,
-                        category: item.category,
-                        checked: item.checked || false
-                    }));
+                if (data && data.length > 0) {
+                    // すべての買い物リストのアイテムを統合
+                    const allItems: ShoppingItem[] = [];
+                    const recipeTitles: string[] = [];
                     
-                    setShoppingList(items);
-                    setRecipeTitle(data.recipe_title);
+                    data.forEach((list) => {
+                        recipeTitles.push(list.recipe_title);
+                        list.items.forEach((item, index) => {
+                            allItems.push({
+                                id: `${list.recipe_id}-${index}`,
+                                name: item.name,
+                                qty: item.qty,
+                                unit: item.unit,
+                                category: item.category,
+                                checked: item.checked || false
+                            });
+                        });
+                    });
+                    
+                    setShoppingList(allItems);
+                    setRecipeTitle(recipeTitles.length > 0 ? recipeTitles.join("、") : "");
                 } else {
                     setShoppingList([]);
                     setRecipeTitle("");
