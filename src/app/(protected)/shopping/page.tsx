@@ -17,6 +17,7 @@ interface ShoppingItem {
     unit: string
     category: string
     checked: boolean
+    recipeTitles: string[]
 }
 
 interface ShoppingListData {
@@ -40,7 +41,6 @@ export default function ShoppingPage() {
     const [selectedCategory, setSelectedCategory] = useState<string>("all");
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [recipeTitle, setRecipeTitle] = useState<string>("");
     const [isCompleted, setIsCompleted] = useState(false);
     const messageTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -71,7 +71,6 @@ export default function ShoppingPage() {
 
         // 表示上リストを空にする
         setShoppingList([]);
-        setRecipeTitle("");
         setIsCompleted(true);
 
         // 完了メッセージを5秒後に自動で閉じる
@@ -109,28 +108,41 @@ export default function ShoppingPage() {
                 
                 if (data && data.length > 0) {
                     // すべての買い物リストのアイテムを統合
-                    const allItems: ShoppingItem[] = [];
-                    const recipeTitles: string[] = [];
+                    // 同じ食材名・単位のアイテムは統合し、レシピ名を集約
+                    const itemsMap = new Map<string, ShoppingItem>();
                     
                     data.forEach((list) => {
-                        recipeTitles.push(list.recipe_title);
                         list.items.forEach((item, index) => {
-                            allItems.push({
-                                id: `${list.recipe_id}-${index}`,
-                                name: item.name,
-                                qty: item.qty,
-                                unit: item.unit,
-                                category: item.category,
-                                checked: item.checked || false
-                            });
+                            // 食材名 + 単位をキーとして使用（qtyは統合時に合計）
+                            const key = `${item.name}-${item.unit}`;
+                            
+                            if (itemsMap.has(key)) {
+                                // 既存のアイテムに統合
+                                const existing = itemsMap.get(key)!;
+                                existing.qty += item.qty || 0;
+                                // レシピ名がまだ含まれていない場合のみ追加
+                                if (!existing.recipeTitles.includes(list.recipe_title)) {
+                                    existing.recipeTitles.push(list.recipe_title);
+                                }
+                            } else {
+                                // 新規アイテム
+                                itemsMap.set(key, {
+                                    id: `${list.recipe_id}-${index}`,
+                                    name: item.name,
+                                    qty: item.qty || 0,
+                                    unit: item.unit,
+                                    category: item.category,
+                                    checked: item.checked || false,
+                                    recipeTitles: [list.recipe_title]
+                                });
+                            }
                         });
                     });
                     
+                    const allItems = Array.from(itemsMap.values());
                     setShoppingList(allItems);
-                    setRecipeTitle(recipeTitles.length > 0 ? recipeTitles.join("、") : "");
                 } else {
                     setShoppingList([]);
-                    setRecipeTitle("");
                 }
             } catch (err) {
                 console.error("買い物リスト取得エラー:", err);
@@ -288,7 +300,9 @@ export default function ShoppingPage() {
                                                                 {item.qty}{item.unit}
                                                             </span>
                                                         </div>
-                                                        <p className="text-xs text-muted-foreground mt-1">{recipeTitle}</p>
+                                                        <p className="text-xs text-muted-foreground mt-1">
+                                                            {item.recipeTitles.join("、")}
+                                                        </p>
                                                     </div>
                                                     <Button 
                                                         variant="ghost" 
