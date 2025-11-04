@@ -23,6 +23,6 @@ export const OutputSchema = z.object({
     ingredients: z.array(Ingredient).min(1),
     steps: z.array(z.string().min(1)).min(1),
     tools: z.array(z.string()).default([]),
-    shopping_lists: z.array(z.object({ name: z.string(), qty: z.number(), unit: z.string() })).default([]),
+    shopping_lists: z.array(ShoppingItem).default([]),
     notes: z.array(z.string()).default([])
 });
