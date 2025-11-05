@@ -19,6 +19,7 @@ type Ingredient = { name: string; qty: number; unit: string; optional?: boolean 
 type ShoppingItem = { name: string; qty: number; unit: string };
 export type RecipeProposal = {
     title: string;
+    description?: string;
     cook_time_min: number;
     ingredients: Ingredient[];
     steps: string[];
@@ -323,7 +324,12 @@ export default function ProposePage() {
                                 </Button>
                             </div>
                         </CardTitle>
-                        <div className="flex gap-6 text-base text-muted-foreground">
+                        {result.description && (
+                            <CardDescription className="text-base mt-2">
+                                {result.description}
+                            </CardDescription>
+                        )}
+                        <div className="flex gap-6 text-base text-muted-foreground mt-2">
                             <div className="flex items-center gap-2">
                                 <Clock className="h-5 w-5"/>{result.cook_time_min}
                             </div>
