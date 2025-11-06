@@ -68,7 +68,7 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
                     <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
                             <Clock className="h-4 w-4"/>
-                            {recipe.cook_time_min}
+                            {recipe.cook_time_min}分
                         </div>
                         <div className="flex items-center gap-1">
                             <Calendar className="h-4 w-4"/>

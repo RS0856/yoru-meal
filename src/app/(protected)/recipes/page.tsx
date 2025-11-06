@@ -57,7 +57,7 @@ export default async function RecipesPage () {
                                 <CardContent className="space-y-4">
                                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                                         <div className="flex items-center gap-1">
-                                            <Clock className="h-4 w-4"/>{recipe.cook_time_min ?? "-"}
+                                            <Clock className="h-4 w-4"/>{recipe.cook_time_min ?? "-"}分
                                         </div>
                                     </div>
 

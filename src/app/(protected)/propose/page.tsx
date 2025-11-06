@@ -331,7 +331,7 @@ export default function ProposePage() {
                         )}
                         <div className="flex gap-6 text-base text-muted-foreground mt-2">
                             <div className="flex items-center gap-2">
-                                <Clock className="h-5 w-5"/>{result.cook_time_min}
+                                <Clock className="h-5 w-5"/>{result.cook_time_min}分
                             </div>
                         </div>
                     </CardHeader>
