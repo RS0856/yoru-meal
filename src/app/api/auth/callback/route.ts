@@ -4,9 +4,12 @@ import { createServerClient } from "@supabase/ssr";
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
-  const code = requestUrl.searchParams.get("code");
+  const token = requestUrl.searchParams.get("token");
+  const type = requestUrl.searchParams.get("type");
+  const email = requestUrl.searchParams.get("email");
 
-  if (code) {
+  // マジックリンクの場合
+  if (token && type === "magiclink" && email) {
     const cookieStore = await cookies();
 
     const supabase = createServerClient(
@@ -26,7 +29,13 @@ export async function GET(request: Request) {
       }
     );
 
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    // マジックリンクトークンを検証してセッションを確立
+    const { error } = await supabase.auth.verifyOtp({
+      email,
+      token,
+      type: "magiclink",
+    });
+
     if (error) {
       return NextResponse.redirect(new URL(`/error?m=${encodeURIComponent(error.message)}`, requestUrl.origin));
     }

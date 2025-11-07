@@ -1,6 +1,6 @@
 "use client"
 
-import { Plus, List, ShoppingCart, Home, Menu, GithubIcon } from "lucide-react";
+import { Plus, List, ShoppingCart, Home, Menu, Mail } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -73,12 +73,12 @@ export default function Header() {
                         })}
                     </nav>
 
-                    <Button className="bg-[#24292e] hover:bg-[#1a1e22] text-white">
-                        <GithubIcon className="h-4 w-4" />
+                    <Button>
+                        <Mail className="h-4 w-4" />
                         {user ? (
                         <a href="/api/auth/logout" className="">ログアウト</a>
                         ) : (
-                        <a href="/api/auth/login" className="">GitHubでログイン</a>
+                        <a href="/login" className="">ログイン</a>
                         )}
                     </Button>
                 </div>
@@ -86,11 +86,11 @@ export default function Header() {
                 {/* Mobile Nav */}
                 <div className="flex items-center space-x-2 md:hidden">
                     <Button>
-                        <GithubIcon className="h-4 w-4" />
+                        <Mail className="h-4 w-4" />
                         {user ? (
                         <a href="/api/auth/logout" className="">ログアウト</a>
                         ) : (
-                        <a href="/api/auth/login" className="">GitHubでログイン</a>
+                        <a href="/login" className="">ログイン</a>
                         )}
                     </Button>
                     <Sheet>
