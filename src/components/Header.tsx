@@ -24,21 +24,36 @@ export default function Header() {
     useEffect(() => {
         const supabase = supabaseBrowser();
         
-        // 現在のユーザーを取得
-        const getUser = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            setUser(user);
+        // 現在のユーザーを取得（セッションからも確認）
+        const checkAuth = async () => {
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                
+                if (session?.user) {
+                    setUser(session.user);
+                    return;
+                }
+                
+                const { data: { user } } = await supabase.auth.getUser();
+                setUser(user);
+            } catch {
+                setUser(null);
+            }
         };
         
-        getUser();
+        checkAuth();
 
         // 認証状態の変更を監視
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
             setUser(session?.user ?? null);
+            
+            if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+                checkAuth();
+            }
         });
 
         return () => subscription.unsubscribe();
-    }, []);
+    }, [pathname]);
 
     return (
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -57,10 +72,17 @@ export default function Header() {
                     <nav className="flex items-center space-x-2 lg:space-x-4">
                         {LINKS.map((item) => {
                             const Icon = item.icon;
+                            const handleClick = async (e: React.MouseEvent) => {
+                                if (item.protected && !user) {
+                                    e.preventDefault();
+                                    window.location.href = "/login";
+                                }
+                            };
                             return (
                                 <Link 
                                     key={item.label} 
                                     href={item.href} 
+                                    onClick={handleClick}
                                     className={`flex items-center space-x-2 px-4 py-2 lg:px-6 lg:py-3 rounded-lg text-sm lg:text-base font-medium transition-all duration-200 hover:scale-105 ${
                                         pathname === item.href
                                         ? "bg-primary text-primary-foreground shadow-md"
@@ -104,10 +126,17 @@ export default function Header() {
                             <nav className="flex flex-col space-y-4 mt-8">
                                 {LINKS.map((item) => {
                                     const Icon = item.icon;
+                                    const handleClick = async (e: React.MouseEvent) => {
+                                        if (item.protected && !user) {
+                                            e.preventDefault();
+                                            window.location.href = "/login";
+                                        }
+                                    };
                                     return (
                                         <Link 
                                             key={item.label} 
                                             href={item.href} 
+                                            onClick={handleClick}
                                             className={`flex items-center space-x-3 px-4 py-3 rounded-lg text-base font-medium transition-colors ${
                                                 pathname === item.href
                                                 ? "bg-primary text-primary-foreground"
