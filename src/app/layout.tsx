@@ -4,7 +4,6 @@ import "./globals.css";
 import { ToastProvider } from "@/components/Toast";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { supabaseServer } from "./lib/supabaseServer";
 
 
 const geistSans = Geist({
@@ -33,9 +32,6 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode;}>) {
-  const supabase = await supabaseServer();
-  const { data: { user } } = await supabase.auth.getUser();
-
   return (
     <html lang="ja">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
