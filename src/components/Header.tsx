@@ -96,11 +96,14 @@ export default function Header() {
                     </nav>
 
                     <Button>
-                        <Mail className="h-4 w-4" />
+                        
                         {user ? (
                         <a href="/api/auth/logout" className="">ログアウト</a>
                         ) : (
-                        <a href="/login" className="">ログイン</a>
+                        <>
+                            <Mail className="h-4 w-4" />
+                            <a href="/login" className="">ログイン</a>
+                        </>
                         )}
                     </Button>
                 </div>
@@ -108,11 +111,14 @@ export default function Header() {
                 {/* Mobile Nav */}
                 <div className="flex items-center space-x-2 md:hidden">
                     <Button>
-                        <Mail className="h-4 w-4" />
+                        
                         {user ? (
                         <a href="/api/auth/logout" className="">ログアウト</a>
                         ) : (
-                        <a href="/login" className="">ログイン</a>
+                        <>
+                            <Mail className="h-4 w-4" />
+                            <a href="/login" className="">ログイン</a>
+                        </>
                         )}
                     </Button>
                     <Sheet>
