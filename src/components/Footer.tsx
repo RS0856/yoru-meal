@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Mail } from "lucide-react";
+
 export default function Footer() {
     return (
         <footer className="border-t bg-muted/50 mt-auto">
@@ -23,6 +25,14 @@ export default function Footer() {
                         <Link href="/shopping" className="text-muted-foreground hover:text-foreground">
                         買い物リスト
                         </Link>
+                    </div>
+                    <div className="flex flex-wrap justify-center gap-6 text-sm pt-4 border-t border-border">
+                        <a 
+                            href="mailto:yorumeal.contact@gmail.com" 
+                            className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
+                            <Mail className="h-4 w-4" />
+                            お問い合わせ
+                        </a>
                     </div>
                     <p className="text-xs text-muted-foreground">
                         © {new Date().getFullYear()} yoru-meal. All rights reserved.
