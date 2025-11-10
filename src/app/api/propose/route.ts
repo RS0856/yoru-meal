@@ -40,7 +40,7 @@ async function rateLimit(req: NextRequest, route="/api/propose", limit = 5, wind
 async function callLLM(client: OpenAI, system: string, user: string) {
     const resp = await client.chat.completions.create({
       model: "gpt-4o-mini",
-      temperature: 0.2,
+      temperature: 0.7,
       messages: [
           { role: "system", content: system },
           { role: "user", content: user }
@@ -58,7 +58,32 @@ export async function POST(req: NextRequest) {
         const body = await req.json();
         const parsed = InputSchema.parse(body);
         const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-        const system = [
+        
+        // 過去の提案履歴を取得（ログインユーザーのみ）
+        const supabase = await supabaseServer();
+        const { data: { user } } = await supabase.auth.getUser();
+        let recentTitles: string[] = [];
+        
+        if (user) {
+            try {
+                const { data: recentRecipes, error: historyError } = await supabase
+                    .from("recipes")
+                    .select("title")
+                    .eq("user_id", user.id)
+                    .order("created_at", { ascending: false })
+                    .limit(10);
+                
+                if (!historyError && recentRecipes) {
+                    recentTitles = recentRecipes.map(r => r.title);
+                }
+            } catch (e) {
+                // 履歴取得失敗時は通常通り提案を継続
+                console.error("Failed to fetch recipe history:", e);
+            }
+        }
+        
+        // システムプロンプトの基本部分
+        const baseSystemPrompt = [
             "あなたは一人暮らし社会人向けの夕食レシピ支援アシスタントです。",
             "厳密なJSONのみを出力してください。コードブロックは不要です。",
             "日本語で出力してください。",
@@ -66,10 +91,16 @@ export async function POST(req: NextRequest) {
             "除外食材は ingredients と shopping_lists に含めないでください。",
             "調理時間は原則30分以内（最大45分）。日本で入手しやすい食材を優先。",
             "分量は servings（人数）に合わせてください。",
-            "shopping_listsの各Itemにはcategory（肉、魚、野菜、調味料、その他）を付与してください"
+            "shopping_listsの各Itemにはcategory（肉、魚、野菜、調味料、その他）を付与してください。",
+            "多様性を重視してください。和食、洋食、中華、エスニックなど様々なカテゴリから選択してください。"
           ].join("\n");
+        
+        // 履歴がある場合は重複回避の指示を追加
+        const system = recentTitles.length > 0
+            ? `${baseSystemPrompt}\n\n重要: 以下のレシピタイトルと似た提案や、同じような料理は避けてください。多様性を重視してください:\n${recentTitles.map((t, i) => `${i + 1}. ${t}`).join("\n")}`
+            : baseSystemPrompt;
 
-          const user = JSON.stringify({
+          const userMessage = JSON.stringify({
             ...parsed,
             output_schema: {
                 title: "string",
@@ -83,13 +114,13 @@ export async function POST(req: NextRequest) {
             }
           });
           //1回目のLLMコール
-          let text = await callLLM(client, system, user);
+          let text = await callLLM(client, system, userMessage);
           let parseOut = OutputSchema.safeParse(JSON.parse(text));
 
           //失敗したら1回だけリトライ
           if (!parseOut.success) {
             const reinforceSystem = system + "\n必ず有効なJSONのみで返答し、未定義・NaN・コメントは使用しないこと。";
-            text = await callLLM(client, reinforceSystem, user);
+            text = await callLLM(client, reinforceSystem, userMessage);
             parseOut = OutputSchema.safeParse(JSON.parse(text));
           }
           if (!parseOut.success) {
