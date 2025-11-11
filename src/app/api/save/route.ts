@@ -35,7 +35,8 @@ export async function POST(req: NextRequest) {
         if (sErr) throw sErr;
 
         return NextResponse.json({ ok: true, recipe_id: recipe.id });
-    } catch (e: any) {
-        return NextResponse.json({ error: e?.message ?? "unknown error" }, { status: 500 });
+    } catch (e: unknown) {
+        const errorMessage = e instanceof Error ? e.message : "unknown error";
+        return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
 }

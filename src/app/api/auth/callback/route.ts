@@ -48,23 +48,40 @@ export async function GET(request: Request) {
   // マジックリンクの場合 - token_hashまたはtokenを使用（旧形式）
   else if ((token || tokenHash) && type === "magiclink") {
     const verifyToken = tokenHash || token;
+    
+    if (!verifyToken) {
+      return NextResponse.redirect(
+        new URL(`/error?m=${encodeURIComponent("トークンが見つかりません")}`, requestUrl.origin)
+      );
+    }
 
     try {
-      const verifyParams: any = {
-        token: verifyToken,
-        type: "magiclink",
-      };
-
+      // emailがある場合はVerifyEmailOtpParams型を使用
       if (email) {
-        verifyParams.email = email;
-      }
+        const { error } = await supabase.auth.verifyOtp({
+          token: verifyToken,
+          type: "magiclink",
+          email: email,
+        });
 
-      const { error } = await supabase.auth.verifyOtp(verifyParams);
+        if (error) {
+          return NextResponse.redirect(
+            new URL(`/error?m=${encodeURIComponent(error.message)}`, requestUrl.origin)
+          );
+        }
+      } else {
+        // emailがない場合はtoken_hashを使用（VerifyTokenHashParams型）
+        // token_hashの場合はtypeを指定しない
+        const { error } = await supabase.auth.verifyOtp({
+          token_hash: verifyToken,
+          type: "magiclink",
+        });
 
-      if (error) {
-        return NextResponse.redirect(
-          new URL(`/error?m=${encodeURIComponent(error.message)}`, requestUrl.origin)
-        );
+        if (error) {
+          return NextResponse.redirect(
+            new URL(`/error?m=${encodeURIComponent(error.message)}`, requestUrl.origin)
+          );
+        }
       }
     } catch (err) {
       return NextResponse.redirect(
