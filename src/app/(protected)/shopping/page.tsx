@@ -9,22 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
-
-interface ShoppingItem {
-    id: string
-    name: string
-    qty: number
-    unit: string
-    category: string
-    checked: boolean
-    recipeTitles: string[]
-}
-
-interface ShoppingListData {
-    recipe_id: string
-    recipe_title: string
-    items: ShoppingItem[]
-}
+import { ShoppingItemWithMetadata, ShoppingListData } from "@/app/lib/types";
 
 
 const categories = ["肉","魚","野菜","調味料","その他"];
@@ -37,7 +22,7 @@ const categoryColors: { [key: string]: string } = {
 }
 
 export default function ShoppingPage() {
-    const [shoppingList, setShoppingList] = useState<ShoppingItem[]>([]);
+    const [shoppingList, setShoppingList] = useState<ShoppingItemWithMetadata[]>([]);
     const [selectedCategory, setSelectedCategory] = useState<string>("all");
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -167,7 +152,7 @@ export default function ShoppingPage() {
             acc[category] = filteredList.filter((item) => item.category === category)
             return acc
         },
-        {} as { [key: string]: ShoppingItem[] },
+        {} as { [key: string]: ShoppingItemWithMetadata[] },
     )
 
     return (

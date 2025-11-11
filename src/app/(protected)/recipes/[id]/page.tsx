@@ -5,9 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Clock, Calendar } from "lucide-react";
 import { ShoppingListButton } from "@/components/ShoppingListButton";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-
-
-type Ingredient = { name: string; qty?: string | number; unit?: string; optional?: boolean };
+import { Ingredient } from "@/app/lib/types";
 
 export default async function RecipeDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;

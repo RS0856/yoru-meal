@@ -10,23 +10,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 
-const TOOL_PRESET = ["電子レンジ","フライパン","鍋","トースター"] as const;
+import { BudgetLevel, GoalType, Ingredient, RecipeProposal } from "@/app/lib/types";
 
-// 型定義
-type BudgetLevel = "low" | "medium" | "high";
-type GoalType = "時短" | "ボリューム重視" | "バランス重視" | "ヘルシー";
-type Ingredient = { name: string; qty: number; unit: string; optional?: boolean };
-type ShoppingItem = { name: string; qty: number; unit: string };
-export type RecipeProposal = {
-    title: string;
-    description?: string;
-    cook_time_min: number;
-    ingredients: Ingredient[];
-    steps: string[];
-    tools: string[];
-    shopping_lists: ShoppingItem[];
-    notes: string[];
-};
+const TOOL_PRESET = ["電子レンジ","フライパン","鍋","トースター"] as const;
 
 // APIエラーメッセージ抽出ヘルパー
 function extractApiErrorMessage(data: unknown): string | null {

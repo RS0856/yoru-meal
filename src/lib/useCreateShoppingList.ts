@@ -1,6 +1,5 @@
 import { useRouter } from "next/navigation";
-
-type Ingredient = { name: string; qty?: string | number; unit?: string; optional?: boolean };
+import { Ingredient } from "@/app/lib/types";
 
 export function useCreateShoppingList() {
     const router = useRouter();

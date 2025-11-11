@@ -3,8 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
 import { useCreateShoppingList } from "@/lib/useCreateShoppingList";
-
-type Ingredient = { name: string; qty?: string | number; unit?: string; optional?: boolean };
+import { Ingredient } from "@/app/lib/types";
 
 interface ShoppingListButtonProps {
     recipeId: string;
