@@ -20,6 +20,7 @@ export const metadata: Metadata = {
   title: "YoruMeal",
   description: "一人暮らしの夜ごはん、秒速決定。夕食メニューを自動提案。買い物リスト生成・レシピ保存まで。",
   metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000"),
+  manifest: "/manifest.json",
   openGraph: {
     title: "YoruMeal",
     description: "一人暮らしの夜ごはん、秒速決定。",
