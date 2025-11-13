@@ -2,6 +2,7 @@
 
 import { Plus, List, ShoppingCart, Home, Menu, Mail } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -60,8 +61,8 @@ export default function Header() {
             <div className="container mx-auto px-4 h-16 flex lg:h-20 items-center justify-between max-w-7xl">
                 {/* Left: Logo */}
                 <Link href="/" className="flex items-center space-x-2">
-                    <div className="h-8 w-8 lg:h-10 lg:w-10 rounded-lg bg-primary flex items-center justify-center">
-                        <span className="text-primary-foreground font-bold text-lg lg:text-xl">夜</span>
+                    <div className="h-8 w-8 lg:h-10 lg:w-10 rounded-lg bg-primary flex items-center justify-center overflow-hidden">
+                        <Image src="/icon.svg" alt="YoruMeal" width={40} height={40} className="h-full w-full object-contain" />
                     </div>
                     <span className="font-bold text-xl lg:text-2xl">YoruMeal</span>
                 </Link>
