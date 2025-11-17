@@ -56,7 +56,14 @@ export async function POST(req: NextRequest) {
         if (!gate.ok) return NextResponse.json({ error: "しばらくしてから再試行してください"}, { status: 429 });
         
         const body = await req.json();
-        const parsed = InputSchema.parse(body);
+        const parseResult = InputSchema.safeParse(body);
+        if (!parseResult.success) {
+            return NextResponse.json(
+                { error: "入力バリデーションエラー", issues: parseResult.error.flatten() },
+                { status: 422 }
+            );
+        }
+        const parsed = parseResult.data;
         const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
         
         // 過去の提案履歴を取得（ログインユーザーのみ）

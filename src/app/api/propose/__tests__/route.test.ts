@@ -305,5 +305,154 @@ describe('/api/propose', () => {
       );
     });
   });
+
+  describe('異常系', () => {
+    it('レート制限を超えた場合、429エラーが返る', async () => {
+      // レート制限を超えた状態をモック（5件以上のデータを返す）
+      mockSupabase.from.mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              gte: jest.fn().mockResolvedValue({ 
+                data: [
+                  { id: '1', at: new Date().toISOString() },
+                  { id: '2', at: new Date().toISOString() },
+                  { id: '3', at: new Date().toISOString() },
+                  { id: '4', at: new Date().toISOString() },
+                  { id: '5', at: new Date().toISOString() },
+                ], 
+                error: null 
+              }),
+            }),
+          }),
+        }),
+        insert: jest.fn().mockResolvedValue({ data: null, error: null }),
+      });
+
+      const requestBody = {
+        exclude_ingredients: [],
+        available_tools: [],
+        servings: 1,
+        goals: ['時短'],
+        budget_level: 'low',
+        locale: 'JP',
+      };
+
+      const req = new NextRequest('http://localhost:3000/api/propose', {
+        method: 'POST',
+        body: JSON.stringify(requestBody),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const response = await POST(req);
+      const data = await response.json();
+      expect(response.status).toBe(429);
+      expect(data.error).toBe('しばらくしてから再試行してください');
+    });
+
+    it('入力バリデーションエラーの場合、422エラーが返る', async () => {
+      // 無効なデータを送信（servingsが負の数）
+      const requestBody = {
+        exclude_ingredients: [],
+        available_tools: [],
+        servings: -1, // 無効な値
+        goals: ['時短'],
+        budget_level: 'low',
+        locale: 'JP',
+      };
+
+      const req = new NextRequest('http://localhost:3000/api/propose', {
+        method: 'POST',
+        body: JSON.stringify(requestBody),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const response = await POST(req);
+      const data = await response.json();
+
+      expect(response.status).toBe(422);
+      expect(data.error).toBe('入力バリデーションエラー');
+      expect(data.issues).toBeDefined();
+    });
+
+    it('LLM出力が不正JSON（再試行で成功）', async () => {
+      // 1回目のLLM呼び出し：不正なJSONを返す（OutputSchemaに準拠しない）
+      mockCreate.mockResolvedValueOnce({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                title: 'テストレシピ',
+                cook_time_min: 50, // 45を超える（無効）
+                ingredients: [], // 空配列（無効）
+                steps: [],
+              }),
+            },
+          },
+        ],
+      });
+
+      // 2回目のLLM呼び出し（再試行）：正常なJSONを返す
+      const mockRecipeResponse = {
+        title: '鶏むねのねぎ塩レンジ蒸し',
+        description: '電子レンジで簡単に作れるヘルシーな鶏むね肉料理',
+        cook_time_min: 20,
+        ingredients: [
+          { name: '鶏むね肉', qty: 1, unit: '枚', optional: false },
+          { name: '長ねぎ', qty: 0.5, unit: '本', optional: false },
+        ],
+        steps: ['鶏むねを薄めのそぎ切りにする'],
+        tools: ['電子レンジ'],
+        shopping_lists: [],
+        notes: [],
+      };
+
+      mockCreate.mockResolvedValueOnce({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify(mockRecipeResponse),
+            },
+          },
+        ],
+      });
+
+      const requestBody = {
+        exclude_ingredients: [],
+        available_tools: ['電子レンジ'],
+        servings: 1,
+        goals: ['時短'],
+        budget_level: 'low',
+        locale: 'JP',
+      };
+
+      const req = new NextRequest('http://localhost:3000/api/propose', {
+        method: 'POST',
+        body: JSON.stringify(requestBody),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const response = await POST(req);
+      const data = await response.json();
+
+      // 正常なレスポンスが返ることを確認
+      expect(response.status).toBe(200);
+      expect(data.title).toBe('鶏むねのねぎ塩レンジ蒸し');
+      expect(data.cook_time_min).toBe(20);
+
+      // OutputSchemaに準拠していることを確認
+      const parseResult = OutputSchema.safeParse(data);
+      expect(parseResult.success).toBe(true);
+
+      // LLM APIが2回呼ばれたことを確認（1回目：失敗、2回目：成功）
+      expect(mockCreate).toHaveBeenCalledTimes(2);
+    });
+  });
 });
 
