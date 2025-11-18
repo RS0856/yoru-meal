@@ -10,7 +10,14 @@ export async function POST(req: NextRequest) {
         if (!user) return NextResponse.json({ error: "未ログイン" }, { status: 401 });
 
         const body = await req.json();
-        const parsed = OutputSchema.parse(body);
+        const parseResult = OutputSchema.safeParse(body);
+        if (!parseResult.success) {
+            return NextResponse.json(
+                { error: "レシピデータの検証に失敗", issues: parseResult.error.flatten() },
+                { status: 422 }
+            );
+        }
+        const parsed = parseResult.data;
 
         const { data: recipe, error: rErr } = await supabase.from("recipes").insert({
             user_id: user.id,
