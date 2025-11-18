@@ -94,7 +94,7 @@ export default function ShoppingPage() {
                 if (data && data.length > 0) {
                     // すべての買い物リストのアイテムを統合
                     // 同じ食材名・単位のアイテムは統合し、レシピ名を集約
-                    const itemsMap = new Map<string, ShoppingItem>();
+                    const itemsMap = new Map<string, ShoppingItemWithMetadata>();
                     
                     data.forEach((list) => {
                         list.items.forEach((item, index) => {
