@@ -1,4 +1,10 @@
 import { defineConfig, devices } from '@playwright/test';
+import { config } from 'dotenv';
+import { resolve } from 'path';
+
+// .envファイルから環境変数を読み込む
+config({ path: resolve(__dirname, '.env.local') });
+config({ path: resolve(__dirname, '.env') });
 
 /**
  * Playwrightの設定ファイル
@@ -37,9 +43,28 @@ export default defineConfig({
 
   // プロジェクト設定（複数のブラウザでテストを実行）
   projects: [
+    // 認証状態を保存するsetupプロジェクト
+    {
+      name: 'setup',
+      testMatch: /.*\.setup\.ts/,
+    },
+    // 認証不要のテスト
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
+      dependencies: [],
+    },
+    // 認証が必要なテスト
+    {
+      name: 'chromium-authenticated',
+      use: { 
+        ...devices['Desktop Chrome'],
+        // 認証状態を読み込む
+        storageState: 'e2e/.auth/user.json',
+      },
+      dependencies: ['setup'],
+      // 認証が必要なテストファイルを指定
+      testMatch: /(full-flow|propose)\.spec\.ts/,
     },
     // 必要に応じて他のブラウザも追加可能
     // {
