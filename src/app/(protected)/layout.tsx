@@ -13,10 +13,8 @@ export default async function ProtectedLayout({ children}: { children: React.Rea
                 getAll() {
                     return cookieStore.getAll()
                 },
-                setAll(cookiesToSet) {
-                    cookiesToSet.forEach(({ name, value, options }) => {
-                        cookieStore.set(name, value, options)
-                    })
+                setAll() {
+                    // no-op in Server Components to avoid cookie writes
                 },
             },
         }
