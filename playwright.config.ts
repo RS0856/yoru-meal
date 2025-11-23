@@ -53,6 +53,8 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
       dependencies: [],
+      // 認証が必要なテストファイルを除外
+      testIgnore: /(full-flow|propose)\.spec\.ts/,
     },
     // 認証が必要なテスト
     {
