@@ -57,15 +57,32 @@ test.describe('一連のユーザーフロー', () => {
     await proposeButton.click();
     
     // ローディング状態を待機
-    await page.waitForSelector('text=レシピを提案中', { timeout: 10000 }).catch(() => {
+    await page.waitForSelector('text=提案中...', { timeout: 10000 }).catch(() => {
       // ローディングメッセージが表示されない場合も続行
     });
     
     // レシピ結果が表示されるまで待機（最大30秒）
     // 複数の方法でレシピ結果の表示を確認
-    // 1. 「保存」ボタンが表示されることを確認
+    // 1. レシピタイトルが表示されることを確認（CardTitle内）
+    await page.waitForSelector('[class*="CardTitle"], h2, h3', { timeout: 30000 }).catch(() => {
+      // タイトルが見つからない場合も続行
+    });
+    
+    // 2. 「保存」ボタンが表示されることを確認
+    // 保存ボタンは「Heart」アイコンと「保存」テキストを含む
     const saveButtonLocator = page.getByRole('button', { name: /保存/i });
-    await expect(saveButtonLocator).toBeVisible({ timeout: 30000 });
+    
+    // 保存ボタンが表示されるまで待機（複数の方法で確認）
+    try {
+      await expect(saveButtonLocator).toBeVisible({ timeout: 30000 });
+    } catch {
+      // 保存ボタンが見つからない場合、レシピ結果カードが表示されているか確認
+      const recipeCard = page.locator('[class*="Card"]').filter({ hasText: /分|材料|手順/ });
+      await expect(recipeCard.first()).toBeVisible({ timeout: 10000 });
+      
+      // 再度保存ボタンを探す
+      await expect(saveButtonLocator).toBeVisible({ timeout: 10000 });
+    }
     
     // 2. レシピタイトルが表示されることを確認
     const recipeTitle = page.locator('h2, h3, [class*="title"]').filter({ 
@@ -109,15 +126,33 @@ test.describe('一連のユーザーフロー', () => {
     // 保存ボタンを探してクリック（既に表示されていることを確認済み）
     await saveButtonLocator.click();
     
-    // 保存成功メッセージを待機
-    await page.waitForSelector('text=保存しました, text=保存に成功, text=レシピを保存しました, [role="alert"]', { 
-      timeout: 10000 
-    }).catch(() => {
-      // トーストメッセージが表示されない場合も続行
-    });
+    // 保存処理が完了するまで待機（保存ボタンが再度有効になる、または成功メッセージが表示される）
+    // まず、保存成功メッセージを待機
+    try {
+      await page.waitForSelector('text=保存しました, text=保存に成功, text=レシピを保存しました', { 
+        timeout: 10000 
+      });
+    } catch {
+      // トーストメッセージが表示されない場合、保存ボタンが再度有効になるのを待つ
+      // （保存処理が完了したことを示す）
+      try {
+        await page.waitForFunction(
+          () => {
+            const buttons = Array.from(document.querySelectorAll('button'));
+            const saveButton = buttons.find(btn => btn.textContent?.includes('保存'));
+            return saveButton && !saveButton.disabled;
+          },
+          { timeout: 10000 }
+        );
+      } catch {
+        // どちらも待機できない場合は続行
+      }
+    }
     
-    // 保存処理が完了するまで少し待機
-    await page.waitForTimeout(1000);
+    // ページが閉じられていないことを確認
+    if (page.isClosed()) {
+      throw new Error('ページが予期せず閉じられました');
+    }
     
     // 認証状態が維持されていることを確認（/proposeページにいることを確認）
     await expect(page).toHaveURL(/\/propose/);
@@ -152,11 +187,29 @@ test.describe('一連のユーザーフロー', () => {
     
     // ===== 5. レシピ詳細表示 =====
     // 最初のレシピの詳細ページへ移動
-    const viewRecipeButton = firstRecipeCard.getByRole('link', { name: /レシピを見る|詳細/i });
-    await viewRecipeButton.click();
+    // レシピカード内の「レシピを見る」リンクを探す
+    const viewRecipeLink = firstRecipeCard.locator('a').filter({ hasText: 'レシピを見る' });
+    await expect(viewRecipeLink).toBeVisible({ timeout: 5000 });
+    
+    // リンクのhref属性を取得
+    const href = await viewRecipeLink.getAttribute('href');
+    if (!href) {
+      throw new Error('レシピ詳細ページへのリンクが見つかりません');
+    }
+    
+    // リンクをクリック
+    await viewRecipeLink.click();
+    
+    // ページ遷移を待機
+    await page.waitForURL(/\/recipes\/[^/]+/, { timeout: 15000 });
     
     // レシピ詳細ページが表示されることを確認
     await expect(page).toHaveURL(/\/recipes\/[^/]+/);
+    
+    // ページが閉じられていないことを確認
+    if (page.isClosed()) {
+      throw new Error('レシピ詳細ページが予期せず閉じられました');
+    }
     
     // レシピの詳細情報が表示されることを確認
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
@@ -175,11 +228,25 @@ test.describe('一連のユーザーフロー', () => {
       });
     }
     
+    // ページが閉じられていないことを確認
+    if (page.isClosed()) {
+      throw new Error('買い物リスト作成後にページが予期せず閉じられました');
+    }
+    
     // ===== 6. 買い物リスト表示 =====
     // ナビゲーションから買い物リストへ移動
     const shoppingLink = page.getByRole('navigation').getByRole('link', { name: '買い物リスト' });
-    await shoppingLink.click();
     
+    // リンクが表示されることを確認
+    await expect(shoppingLink).toBeVisible({ timeout: 5000 });
+    
+    // リンクをクリックしてページ遷移を待機
+    await Promise.all([
+      page.waitForURL(/\/shopping/, { timeout: 10000 }),
+      shoppingLink.click(),
+    ]);
+    
+    // URLが正しいことを確認
     await expect(page).toHaveURL(/\/shopping/);
     
     // AC-04: 買い物リストが /shopping に統合表示され、カテゴリ別フィルタが機能する
