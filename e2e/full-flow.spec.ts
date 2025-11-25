@@ -126,32 +126,43 @@ test.describe('一連のユーザーフロー', () => {
     // 保存ボタンを探してクリック（既に表示されていることを確認済み）
     await saveButtonLocator.click();
     
-    // 保存処理が完了するまで待機（保存ボタンが再度有効になる、または成功メッセージが表示される）
-    // まず、保存成功メッセージを待機
+    // 保存処理が完了するまで待機
+    // ネットワークリクエストの完了を待つ（/api/saveへのリクエスト）
     try {
-      await page.waitForSelector('text=保存しました, text=保存に成功, text=レシピを保存しました', { 
-        timeout: 10000 
-      });
+      // /api/saveへのリクエストが完了するまで待機
+      await page.waitForResponse(
+        (response) => response.url().includes('/api/save') && response.status() !== 0,
+        { timeout: 15000 }
+      );
     } catch {
-      // トーストメッセージが表示されない場合、保存ボタンが再度有効になるのを待つ
-      // （保存処理が完了したことを示す）
+      // ネットワークリクエストの待機に失敗した場合、保存成功メッセージを待機
       try {
-        await page.waitForFunction(
-          () => {
-            const buttons = Array.from(document.querySelectorAll('button'));
-            const saveButton = buttons.find(btn => btn.textContent?.includes('保存'));
-            return saveButton && !saveButton.disabled;
-          },
-          { timeout: 10000 }
-        );
+        await page.waitForSelector('text=保存しました, text=保存に成功, text=レシピを保存しました', { 
+          timeout: 10000 
+        });
       } catch {
-        // どちらも待機できない場合は続行
+        // メッセージも表示されない場合、保存ボタンの状態変化を待機
+        // ただし、ページが閉じられていないことを確認してから実行
+        if (!page.isClosed()) {
+          try {
+            await page.waitForFunction(
+              () => {
+                const buttons = Array.from(document.querySelectorAll('button'));
+                const saveButton = buttons.find(btn => btn.textContent?.includes('保存'));
+                return saveButton && !saveButton.disabled;
+              },
+              { timeout: 5000 }
+            );
+          } catch {
+            // どちらも待機できない場合は続行
+          }
+        }
       }
     }
     
     // ページが閉じられていないことを確認
     if (page.isClosed()) {
-      throw new Error('ページが予期せず閉じられました');
+      throw new Error('保存処理後にページが予期せず閉じられました');
     }
     
     // 認証状態が維持されていることを確認（/proposeページにいることを確認）
@@ -218,35 +229,25 @@ test.describe('一連のユーザーフロー', () => {
     // 買い物リスト作成ボタンを探す
     const shoppingListButton = page.getByRole('button', { name: /買い物リスト|ショッピング/i });
     if (await shoppingListButton.isVisible().catch(() => false)) {
-      await shoppingListButton.click();
+      // 買い物リスト作成ボタンをクリック
+      // 成功時は自動的に /shopping ページに遷移する
+      await Promise.all([
+        page.waitForURL(/\/shopping/, { timeout: 15000 }),
+        shoppingListButton.click(),
+      ]);
+    } else {
+      // 買い物リスト作成ボタンが表示されていない場合、ナビゲーションから移動
+      // ===== 6. 買い物リスト表示 =====
+      const shoppingLink = page.getByRole('navigation').getByRole('link', { name: '買い物リスト' });
+      await expect(shoppingLink).toBeVisible({ timeout: 5000 });
       
-      // 買い物リスト作成成功メッセージを待機
-      await page.waitForSelector('text=追加しました, text=作成しました, [role="alert"]', { 
-        timeout: 5000 
-      }).catch(() => {
-        // 成功メッセージが表示されない場合も続行
-      });
+      await Promise.all([
+        page.waitForURL(/\/shopping/, { timeout: 10000 }),
+        shoppingLink.click(),
+      ]);
     }
     
-    // ページが閉じられていないことを確認
-    if (page.isClosed()) {
-      throw new Error('買い物リスト作成後にページが予期せず閉じられました');
-    }
-    
-    // ===== 6. 買い物リスト表示 =====
-    // ナビゲーションから買い物リストへ移動
-    const shoppingLink = page.getByRole('navigation').getByRole('link', { name: '買い物リスト' });
-    
-    // リンクが表示されることを確認
-    await expect(shoppingLink).toBeVisible({ timeout: 5000 });
-    
-    // リンクをクリックしてページ遷移を待機
-    await Promise.all([
-      page.waitForURL(/\/shopping/, { timeout: 10000 }),
-      shoppingLink.click(),
-    ]);
-    
-    // URLが正しいことを確認
+    // URLが正しいことを確認（買い物リスト作成ボタンで遷移した場合）
     await expect(page).toHaveURL(/\/shopping/);
     
     // AC-04: 買い物リストが /shopping に統合表示され、カテゴリ別フィルタが機能する
