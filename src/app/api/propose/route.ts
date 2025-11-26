@@ -14,10 +14,14 @@ const InputSchema = z.object({
     locale: z.string().default("JP")
 });
 
-async function rateLimit(req: NextRequest, route="/api/propose", limit = 5, windowSec = 60) {
-  const supabase = await supabaseServer();
-  const { data: { user } } = await supabase.auth.getUser();
-
+async function rateLimit(
+  supabase: Awaited<ReturnType<typeof supabaseServer>>,
+  user: { id: string } | null,
+  req: NextRequest,
+  route="/api/propose",
+  limit = 5,
+  windowSec = 60
+) {
   const xfwd = req.headers.get("x-forwarded-for") || "";
   const ip = xfwd.split(",")[0]?.trim() || "unknown";
   const key = user?.id ?? `ip:${ip}`;
@@ -52,10 +56,6 @@ async function callLLM(client: OpenAI, system: string, user: string) {
 
 export async function POST(req: NextRequest) {
     try {
-        // 1日10回の制限（86400秒 = 24時間）
-        const gate = await rateLimit(req, "/api/propose", 10, 86400);
-        if (!gate.ok) return NextResponse.json({ error: "1日の提案回数上限（10回）に達しました。明日またお試しください。"}, { status: 429 });
-        
         const body = await req.json();
         const parseResult = InputSchema.safeParse(body);
         if (!parseResult.success) {
@@ -65,30 +65,47 @@ export async function POST(req: NextRequest) {
             );
         }
         const parsed = parseResult.data;
-        const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
         
-        // 過去の提案履歴を取得（ログインユーザーのみ）
+        // Supabase接続と認証を一度だけ実行
         const supabase = await supabaseServer();
         const { data: { user } } = await supabase.auth.getUser();
-        let recentTitles: string[] = [];
         
-        if (user) {
+        // レート制限チェックと過去の提案履歴取得を並列実行
+        const fetchHistory = async () => {
+            if (!user) return { data: null, error: null };
             try {
-                const { data: recentRecipes, error: historyError } = await supabase
+                const result = await supabase
                     .from("recipes")
                     .select("title")
                     .eq("user_id", user.id)
                     .order("created_at", { ascending: false })
                     .limit(10);
-                
-                if (!historyError && recentRecipes) {
-                    recentTitles = recentRecipes.map(r => r.title);
-                }
-            } catch (e) {
-                // 履歴取得失敗時は通常通り提案を継続
-                console.error("Failed to fetch recipe history:", e);
+                return { data: result.data, error: result.error };
+            } catch (e: unknown) {
+                return { data: null, error: e };
             }
+        };
+
+        const [rateLimitResult, historyResult] = await Promise.all([
+            rateLimit(supabase, user, req, "/api/propose", 10, 86400),
+            fetchHistory()
+        ]);
+        
+        // レート制限チェック
+        if (!rateLimitResult.ok) {
+            return NextResponse.json({ error: "1日の提案回数上限（10回）に達しました。明日またお試しください。"}, { status: 429 });
         }
+        
+        // 過去の提案履歴を処理（ログインユーザーのみ、上記で並列取得済み）
+        let recentTitles: string[] = [];
+        if (user && historyResult.data && !historyResult.error) {
+            recentTitles = historyResult.data.map((r: { title: string }) => r.title);
+        } else if (historyResult.error) {
+            // 履歴取得失敗時は通常通り提案を継続
+            console.error("Failed to fetch recipe history:", historyResult.error);
+        }
+        
+        const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
         
         // システムプロンプトの基本部分
         const baseSystemPrompt = [
