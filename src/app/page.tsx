@@ -65,6 +65,9 @@ export default async function Home() {
               <br />
               AIがあなたに寄り添った夕食レシピを提案します
             </p>
+            <p className="text-base md:text-lg text-muted-foreground/80 max-w-2xl mx-auto">
+              現在は無料でお使いいただけます
+            </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center">
             <Button asChild size="lg" className="h-12 lg:h-14 px-8 lg:px-12 text-base lg:text-lg">

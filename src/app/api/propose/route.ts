@@ -52,8 +52,9 @@ async function callLLM(client: OpenAI, system: string, user: string) {
 
 export async function POST(req: NextRequest) {
     try {
-        const gate = await rateLimit(req, "/api/propose", 5, 60);
-        if (!gate.ok) return NextResponse.json({ error: "しばらくしてから再試行してください"}, { status: 429 });
+        // 1日10回の制限（86400秒 = 24時間）
+        const gate = await rateLimit(req, "/api/propose", 10, 86400);
+        if (!gate.ok) return NextResponse.json({ error: "1日の提案回数上限（10回）に達しました。明日またお試しください。"}, { status: 429 });
         
         const body = await req.json();
         const parseResult = InputSchema.safeParse(body);
