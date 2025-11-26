@@ -252,9 +252,12 @@ test.describe('一連のユーザーフロー', () => {
     
     // AC-04: 買い物リストが /shopping に統合表示され、カテゴリ別フィルタが機能する
     // 買い物リストが表示されることを確認
-    await page.waitForSelector('text=買い物リスト, [class*="shopping"], [class*="item"]', { 
-      timeout: 10000 
-    });
+    // ページが完全に読み込まれるまで待機
+    await page.waitForLoadState('networkidle');
+    
+    // 買い物リストのタイトルが表示されることを確認
+    const shoppingListTitle = page.getByRole('heading', { name: '買い物リスト' });
+    await expect(shoppingListTitle).toBeVisible({ timeout: 10000 });
     
     // 買い物リストのアイテムが表示されることを確認
     const shoppingItems = page.locator('[class*="item"], [data-testid="shopping-item"]');
