@@ -36,12 +36,12 @@ export async function GET(request: Request) {
 
       if (error) {
         return NextResponse.redirect(
-          new URL(`/error?m=${encodeURIComponent(error.message)}`, requestUrl.origin)
+          new URL(`/login?error=${encodeURIComponent(error.message)}`, requestUrl.origin)
         );
       }
     } catch (err) {
       return NextResponse.redirect(
-        new URL(`/error?m=${encodeURIComponent(err instanceof Error ? err.message : "Unknown error")}`, requestUrl.origin)
+        new URL(`/login?error=${encodeURIComponent(err instanceof Error ? err.message : "認証に失敗しました")}`, requestUrl.origin)
       );
     }
   }
@@ -51,7 +51,7 @@ export async function GET(request: Request) {
     
     if (!verifyToken) {
       return NextResponse.redirect(
-        new URL(`/error?m=${encodeURIComponent("トークンが見つかりません")}`, requestUrl.origin)
+        new URL(`/login?error=${encodeURIComponent("トークンが見つかりません")}`, requestUrl.origin)
       );
     }
 
@@ -66,7 +66,7 @@ export async function GET(request: Request) {
 
         if (error) {
           return NextResponse.redirect(
-            new URL(`/error?m=${encodeURIComponent(error.message)}`, requestUrl.origin)
+            new URL(`/login?error=${encodeURIComponent(error.message)}`, requestUrl.origin)
           );
         }
       } else {
@@ -79,13 +79,13 @@ export async function GET(request: Request) {
 
         if (error) {
           return NextResponse.redirect(
-            new URL(`/error?m=${encodeURIComponent(error.message)}`, requestUrl.origin)
+            new URL(`/login?error=${encodeURIComponent(error.message)}`, requestUrl.origin)
           );
         }
       }
     } catch (err) {
       return NextResponse.redirect(
-        new URL(`/error?m=${encodeURIComponent(err instanceof Error ? err.message : "Unknown error")}`, requestUrl.origin)
+        new URL(`/login?error=${encodeURIComponent(err instanceof Error ? err.message : "認証に失敗しました")}`, requestUrl.origin)
       );
     }
   }

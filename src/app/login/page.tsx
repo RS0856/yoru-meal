@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { MainLayout } from "@/components/Main-layout"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -8,9 +9,21 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Mail } from "lucide-react"
 
 export default function LoginPage() {
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
+
+  // URLパラメータからエラーメッセージを読み取る
+  useEffect(() => {
+    const errorParam = searchParams.get("error")
+    if (errorParam) {
+      setMessage({
+        type: "error",
+        text: decodeURIComponent(errorParam)
+      })
+    }
+  }, [searchParams])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -99,4 +112,3 @@ export default function LoginPage() {
     </MainLayout>
   )
 }
-
