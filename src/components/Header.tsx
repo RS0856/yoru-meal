@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { supabaseBrowser } from "@/app/lib/supabaseBrowser";
 
@@ -130,6 +130,7 @@ export default function Header() {
                             </Button>
                         </SheetTrigger>
                         <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+                            <SheetTitle className="sr-only">メニュー</SheetTitle>
                             <nav className="flex flex-col space-y-4 mt-8">
                                 {LINKS.map((item) => {
                                     const Icon = item.icon;
