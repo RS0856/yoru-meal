@@ -13,18 +13,23 @@ type User = { id: string | null; email?: string | null };
 
 const LINKS = [
     { href: "/", label: "ホーム", icon: Home, protected: false },
-    { href: "/propose", label: "提案", icon: Plus, protected: false },
+    { href: "/propose", label: "提案", icon: Plus, protected: true },
     { href: "/recipes", label: "保存一覧", icon: List,protected: true },
     { href: "/shopping", label: "買い物リスト", icon: ShoppingCart, protected: true },
   ];
 
 export default function Header() {
-    const [user, setUser] = useState<User | null>(null);
+    const [user, setUser] = useState<User | null | undefined>(undefined);
     const pathname = usePathname();
 
     useEffect(() => {
         const supabase = supabaseBrowser();
         
+        // 認証状態の変更を監視
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            setUser(session?.user ?? null);
+        });
+
         // 現在のユーザーを取得（セッションからも確認）
         const checkAuth = async () => {
             try {
@@ -44,17 +49,8 @@ export default function Header() {
         
         checkAuth();
 
-        // 認証状態の変更を監視
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-            setUser(session?.user ?? null);
-            
-            if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-                checkAuth();
-            }
-        });
-
         return () => subscription.unsubscribe();
-    }, [pathname]);
+    }, []);
 
     return (
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -62,7 +58,7 @@ export default function Header() {
                 {/* Left: Logo */}
                 <Link href="/" className="flex items-center space-x-2">
                     <div className="h-8 w-8 lg:h-10 lg:w-10 rounded-lg bg-primary flex items-center justify-center overflow-hidden">
-                        <Image src="/icon.svg" alt="YoruMeal" width={40} height={40} className="h-full w-full object-contain" />
+                        <Image src="/icon.svg" alt="YoruMeal" width={40} height={40} className="h-full w-full object-contain" priority />
                     </div>
                     <span className="font-bold text-xl lg:text-2xl">YoruMeal</span>
                 </Link>
@@ -96,9 +92,14 @@ export default function Header() {
                         })}
                     </nav>
 
-                    <Button>
+                    <Button className="min-w-[100px]">
                         
-                        {user ? (
+                        {user === undefined ? (
+                        <span className="invisible whitespace-nowrap">
+                            <Mail className="h-4 w-4 inline" />
+                            ログイン
+                        </span>
+                        ) : user ? (
                         <a href="/api/auth/logout" className="">ログアウト</a>
                         ) : (
                         <>
@@ -111,9 +112,14 @@ export default function Header() {
 
                 {/* Mobile Nav */}
                 <div className="flex items-center space-x-2 md:hidden">
-                    <Button>
+                    <Button className="min-w-[100px]">
                         
-                        {user ? (
+                        {user === undefined ? (
+                        <span className="invisible whitespace-nowrap">
+                            <Mail className="h-4 w-4 inline" />
+                            ログイン
+                        </span>
+                        ) : user ? (
                         <a href="/api/auth/logout" className="">ログアウト</a>
                         ) : (
                         <>
