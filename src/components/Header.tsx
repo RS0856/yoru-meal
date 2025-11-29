@@ -95,10 +95,10 @@ export default function Header() {
                     <Button className="min-w-[100px]">
                         
                         {user === undefined ? (
-                        <span className="invisible whitespace-nowrap">
-                            <Mail className="h-4 w-4 inline" />
-                            ログイン
-                        </span>
+                        <>
+                            <Mail className="h-4 w-4 invisible" />
+                            <span className="invisible whitespace-nowrap">ログイン</span>
+                        </>
                         ) : user ? (
                         <a href="/api/auth/logout" className="">ログアウト</a>
                         ) : (
@@ -115,10 +115,10 @@ export default function Header() {
                     <Button className="min-w-[100px]">
                         
                         {user === undefined ? (
-                        <span className="invisible whitespace-nowrap">
-                            <Mail className="h-4 w-4 inline" />
-                            ログイン
-                        </span>
+                        <>
+                            <Mail className="h-4 w-4 invisible" />
+                            <span className="invisible whitespace-nowrap">ログイン</span>
+                        </>
                         ) : user ? (
                         <a href="/api/auth/logout" className="">ログアウト</a>
                         ) : (
