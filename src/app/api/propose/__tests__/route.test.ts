@@ -4,6 +4,7 @@
 import { POST } from '../route';
 import { NextRequest } from 'next/server';
 import { OutputSchema } from '@/app/lib/validators';
+import { supabaseServer } from '@/app/lib/supabaseServer';
 
 // OpenAIモジュールをモック
 const mockCreate = jest.fn();
@@ -24,21 +25,29 @@ jest.mock('@/app/lib/supabaseServer', () => ({
   supabaseServer: jest.fn(),
 }));
 
+// モックSupabaseクライアントの型定義
+type MockSupabase = {
+  auth: {
+    getUser: jest.Mock;
+  };
+  from: jest.Mock;
+};
+
 describe('/api/propose', () => {
-  let mockSupabase: any;
+  let mockSupabase: MockSupabase;
 
   beforeEach(() => {
     jest.clearAllMocks();
 
     // Supabaseのモック
-    const { supabaseServer } = require('@/app/lib/supabaseServer');
+    const mockedSupabaseServer = jest.mocked(supabaseServer);
     mockSupabase = {
       auth: {
         getUser: jest.fn(),
       },
       from: jest.fn(),
     };
-    supabaseServer.mockResolvedValue(mockSupabase);
+    mockedSupabaseServer.mockResolvedValue(mockSupabase as never);
 
     // レート制限のモック（デフォルトで通過）
     mockSupabase.from.mockReturnValue({
@@ -308,25 +317,44 @@ describe('/api/propose', () => {
 
   describe('異常系', () => {
     it('レート制限を超えた場合、429エラーが返る', async () => {
-      // レート制限を超えた状態をモック（5件以上のデータを返す）
-      mockSupabase.from.mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
+      // レート制限を超えた状態をモック（10件以上のデータを返す）
+      mockSupabase.from.mockImplementation((table: string) => {
+        if (table === 'api_rate_limit') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                eq: jest.fn().mockReturnValue({
+                  gte: jest.fn().mockResolvedValue({ 
+                    data: [
+                      { id: '1', at: new Date().toISOString() },
+                      { id: '2', at: new Date().toISOString() },
+                      { id: '3', at: new Date().toISOString() },
+                      { id: '4', at: new Date().toISOString() },
+                      { id: '5', at: new Date().toISOString() },
+                      { id: '6', at: new Date().toISOString() },
+                      { id: '7', at: new Date().toISOString() },
+                      { id: '8', at: new Date().toISOString() },
+                      { id: '9', at: new Date().toISOString() },
+                      { id: '10', at: new Date().toISOString() },
+                    ], 
+                    error: null 
+                  }),
+                }),
+              }),
+            }),
+            insert: jest.fn().mockResolvedValue({ data: null, error: null }),
+          };
+        }
+        return {
+          select: jest.fn().mockReturnValue({
             eq: jest.fn().mockReturnValue({
-              gte: jest.fn().mockResolvedValue({ 
-                data: [
-                  { id: '1', at: new Date().toISOString() },
-                  { id: '2', at: new Date().toISOString() },
-                  { id: '3', at: new Date().toISOString() },
-                  { id: '4', at: new Date().toISOString() },
-                  { id: '5', at: new Date().toISOString() },
-                ], 
-                error: null 
+              eq: jest.fn().mockReturnValue({
+                gte: jest.fn().mockResolvedValue({ data: [], error: null }),
               }),
             }),
           }),
-        }),
-        insert: jest.fn().mockResolvedValue({ data: null, error: null }),
+          insert: jest.fn().mockResolvedValue({ data: null, error: null }),
+        };
       });
 
       const requestBody = {
@@ -349,7 +377,7 @@ describe('/api/propose', () => {
       const response = await POST(req);
       const data = await response.json();
       expect(response.status).toBe(429);
-      expect(data.error).toBe('しばらくしてから再試行してください');
+      expect(data.error).toBe('1日の提案回数上限（10回）に達しました。明日またお試しください。');
     });
 
     it('入力バリデーションエラーの場合、422エラーが返る', async () => {

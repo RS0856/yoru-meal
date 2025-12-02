@@ -3,28 +3,36 @@
  */
 import { POST } from '../route';
 import { NextRequest } from 'next/server';
-import { OutputSchema } from '@/app/lib/validators';
+import { supabaseServer } from '@/app/lib/supabaseServer';
 
 // supabaseServerをモック
 jest.mock('@/app/lib/supabaseServer', () => ({
   supabaseServer: jest.fn(),
 }));
 
+// モックSupabaseクライアントの型定義
+type MockSupabase = {
+  auth: {
+    getUser: jest.Mock;
+  };
+  from: jest.Mock;
+};
+
 describe('/api/save', () => {
-  let mockSupabase: any;
+  let mockSupabase: MockSupabase;
 
   beforeEach(() => {
     jest.clearAllMocks();
 
     // Supabaseのモック
-    const { supabaseServer } = require('@/app/lib/supabaseServer');
+    const mockedSupabaseServer = jest.mocked(supabaseServer);
     mockSupabase = {
       auth: {
         getUser: jest.fn(),
       },
       from: jest.fn(),
     };
-    supabaseServer.mockResolvedValue(mockSupabase);
+    mockedSupabaseServer.mockResolvedValue(mockSupabase as never);
 
     // 認証のモック（デフォルトで未ログイン）
     mockSupabase.auth.getUser.mockResolvedValue({ data: { user: null }, error: null });
