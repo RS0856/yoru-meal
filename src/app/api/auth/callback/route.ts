@@ -29,7 +29,7 @@ export async function GET(request: Request) {
     }
   );
 
-  // codeパラメータがある場合（Supabaseのマジックリンクはcodeを使用）
+  // codeパラメータがある場合（SupabaseのPKCEフロー）
   if (code) {
     try {
       const { error } = await supabase.auth.exchangeCodeForSession(code);
@@ -45,8 +45,8 @@ export async function GET(request: Request) {
       );
     }
   }
-  // マジックリンクの場合 - token_hashまたはtokenを使用（旧形式）
-  else if ((token || tokenHash) && type === "magiclink") {
+  // マジックリンクまたはサインアップメールの場合 - token_hashまたはtokenを使用
+  else if (token || tokenHash) {
     const verifyToken = tokenHash || token;
     
     if (!verifyToken) {
@@ -56,11 +56,16 @@ export async function GET(request: Request) {
     }
 
     try {
+      // typeに応じて処理を分岐
+      // magiclink: 既存ユーザーのログイン
+      // signup または email: 新規ユーザーのサインアップ確認
+      const otpType = type === "magiclink" ? "magiclink" : type === "signup" ? "signup" : type === "email" ? "email" : "magiclink";
+      
       // emailがある場合はVerifyEmailOtpParams型を使用
       if (email) {
         const { error } = await supabase.auth.verifyOtp({
           token: verifyToken,
-          type: "magiclink",
+          type: otpType as "magiclink" | "signup" | "email",
           email: email,
         });
 
@@ -71,10 +76,9 @@ export async function GET(request: Request) {
         }
       } else {
         // emailがない場合はtoken_hashを使用（VerifyTokenHashParams型）
-        // token_hashの場合はtypeを指定しない
         const { error } = await supabase.auth.verifyOtp({
           token_hash: verifyToken,
-          type: "magiclink",
+          type: otpType as "magiclink" | "signup" | "email",
         });
 
         if (error) {
