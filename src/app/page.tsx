@@ -130,9 +130,6 @@ export default async function Home() {
               const Icon = step.icon;
               return (
                 <div key={step.step} className="text-center space-y-6 relative">
-                  {index < steps.length - 1 && (
-                    <div className="hidden lg:block absolute top-10 left-full w-12 h-0.5 bg-primary/20 transform -translate-x-6"/>
-                  )}
                   <div className="relative">
                     <div className="w-20 h-20 lg:w-24 lg:h-24 rounded-full bg-primary/10 flex items-center justify-center mx-auto shadow-lg">
                       <Icon className="h-10 w-10 lg:h-12 lg:w-12 text-primary"/>
