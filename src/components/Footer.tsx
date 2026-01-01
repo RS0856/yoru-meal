@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Mail } from "lucide-react";
 
 export default function Footer() {
@@ -7,8 +8,8 @@ export default function Footer() {
             <div className="container mx-auto px-4 py-3">
                 <div className="flex flex-col items-center justify-center space-y-4 text-center">
                     <div className="flex items-center space-x-2">
-                        <div className="h-6 w-6 rounded bg-primary flex items-center justify-center">
-                            <span className="text-primary-foreground font-bold text-sm">夜</span>
+                        <div className="h-6 w-6 rounded bg-primary flex items-center justify-center overflow-hidden">
+                            <Image src="/icon.svg" alt="YoruMeal" width={24} height={24} className="h-full w-full object-contain" />
                         </div>
                         <span className="font-semibold">YoruMeal</span>
                     </div>
