@@ -6,7 +6,8 @@ import { MainLayout } from "@/components/Main-layout"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
-import { Mail } from "lucide-react"
+import { Mail, Eye } from "lucide-react"
+import Link from "next/link"
 
 function LoginForm() {
   const searchParams = useSearchParams()
@@ -104,6 +105,19 @@ function LoginForm() {
             {isLoading ? "送信中..." : "ログインリンクを送信"}
           </Button>
         </form>
+
+        {/* デモボタン */}
+        <div className="mt-6 pt-6 border-t">
+          <p className="text-sm text-muted-foreground text-center mb-4">
+            まずは機能を確認したい方は
+          </p>
+          <Button asChild variant="outline" className="w-full">
+            <Link href="/demo-propose">
+              <Eye className="mr-2 h-4 w-4" />
+              デモで試す（閲覧のみ）
+            </Link>
+          </Button>
+        </div>
       </CardContent>
     </Card>
   )

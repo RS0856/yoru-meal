@@ -1,7 +1,7 @@
 import { MainLayout } from "@/components/Main-layout";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Plus, List, ShoppingCart, ChefHat, Clock, Heart } from "lucide-react";
+import { Plus, List, ShoppingCart, ChefHat, Clock, Heart, Eye } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 
 const features = [
@@ -78,6 +78,14 @@ export default async function Home() {
             <Button asChild variant="outline" size="lg" className="h-12 lg:h-14 px-8 lg:px-12 text-base lg:text-lg bg-transparent">
               <Link href={"/recipes"}>
                 <List className="mr-2 h-5 w-5 lg:h-6 lg:w-6"/>保存したレシピを見る
+              </Link>
+            </Button>
+          </div>
+          <div className="pt-4">
+            <Button asChild variant="ghost" size="lg" className="text-muted-foreground hover:text-foreground">
+              <Link href="/demo-propose">
+                <Eye className="mr-2 h-5 w-5" />
+                デモで試す（閲覧のみ）
               </Link>
             </Button>
           </div>
